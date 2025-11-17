@@ -13,7 +13,7 @@ pom.xml.asc
 .hg/
 .clj-kondo/.cache
 .clj-kondo/imports
-eventplannerjs/out
+rcprojectsdir/out
 build
 www
 rcprojectsdir/.cpcache
