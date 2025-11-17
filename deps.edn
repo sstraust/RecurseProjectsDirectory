@@ -13,5 +13,7 @@
                                          :deps/root "server"}
          clj-time/clj-time {:mvn/version "0.15.2"}
          hiccup/hiccup {:mvn/version "1.0.5"}
+         org.clojure/java.jdbc {:mvn/version "0.7.12"}
+         org.postgresql/postgresql {:mvn/version "42.7.3"}
          }
  }

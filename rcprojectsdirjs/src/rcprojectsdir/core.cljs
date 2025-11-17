@@ -1,12 +1,14 @@
 (ns rcprojectsdir.core
-  (:require [reagent.dom :as rdom]
-            [cljs.core.async :refer [<!]]
-            [cljs-http.client :as http]
-            [easyreagent.components :as er]
-            [reagent.core :as r]))
+  (:require
+   [cljs-http.client :as http]
+   [cljs.core.async :refer [<!]]
+   [rcprojectsdir.pages.home-page :as home-page]
+   [reagent.dom :as rdom]))
+
+
 
 (defn load-main-page []
-  (rdom/render [:div.ml-4 "Hi from reagent"]
+  (rdom/render [home-page/home-page]
                (js/document.getElementById "main-app")))
 
 (defn ^:export load-page []

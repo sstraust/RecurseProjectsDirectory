@@ -3,7 +3,7 @@
  :builds {:app
           {
            :devtools {
-                      :autobuild false
+                      :autobuild true
                       }
            :output-dir "out"
            :target :browser
