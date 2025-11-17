@@ -16,10 +16,10 @@ pom.xml.asc
 rcprojectsdir/out
 build
 www
-rcprojectsdir/.cpcache
-rcprojectsdir/.clj-kondo/.cache
-rcprojectsdir/.shadow-cljs
-rcprojectsdir/node_modules
+rcprojectsdirjs/.cpcache
+rcprojectsdirjs/.clj-kondo/.cache
+rcprojectsdirjs/.shadow-cljs
+rcprojectsdirjs/node_modules
 .clj-kondo/.cache
 .cpcache
 *.#*
