@@ -3,15 +3,16 @@
             [easyreagentserver.core :as er-server]
             [hiccup.page :refer [include-js include-css html5]]
             [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]))
+            [clojure.java.jdbc :as jdbc]
+            [environ.core :refer [env]]))
 
 (def db-spec
   {:dbtype "postgresql"
-   :dbname "rcprojectsdir"
-   :host "localhost"
-   :port 5432
-   :user "myuser"
-   :password "mypass"})
+   :dbname (env :postgres-db "rcprojectsdir")
+   :host (env :postgres-host "localhost")
+   :port (env :postgres-port 5432)
+   :user (env :postgres-user "myuser")
+   :password (env :postgres-password "mypass")})
 
 (comment 
 (jdbc/execute!
