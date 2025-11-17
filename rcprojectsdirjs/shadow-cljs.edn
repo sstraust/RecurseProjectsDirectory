@@ -1,0 +1,18 @@
+{
+ :deps true
+ :builds {:app
+          {
+           :devtools {
+                      :autobuild false
+                      }
+           :output-dir "out"
+           :target :browser
+           :modules {:main {:init-fn rcprojectsdir.core/load-page}}
+           }
+          :prod {
+                 :output-dir "prod_js"
+                 :target :browser
+                 :modules {:main {:init-fn rcprojectsdir.core/load-page}}
+                 }
+          }
+ }
