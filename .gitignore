@@ -32,3 +32,4 @@ python/hn_checkpoint.json
 db_dump*
 database_dump*
 node_modules
+.env
