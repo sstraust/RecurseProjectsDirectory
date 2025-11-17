@@ -19,14 +19,15 @@
  db-spec
  ["CREATE TABLE IF NOT EXISTS test_table (
     id SERIAL PRIMARY KEY,
-    description TEXT NOT NULL)"])
+    description TEXT NOT NULL)"]))
 
 
-(jdbc/execute!
+
+#_(jdbc/execute!
  db-spec
  ["INSERT INTO  test_table (id, description) VALUES (?, ?)" 12 "hi"])
 
-(jdbc/query
+#_(jdbc/query
  db-spec
  ["SELECT * FROM test_table"])
 
