@@ -20,7 +20,7 @@ return tag;
  */
 cljss.sheet.ISheet = function(){};
 
-var cljss$sheet$ISheet$insert_BANG_$dyn_45945 = (function (this$,css,cls_name){
+var cljss$sheet$ISheet$insert_BANG_$dyn_38694 = (function (this$,css,cls_name){
 var x__5390__auto__ = (((this$ == null))?null:this$);
 var m__5391__auto__ = (cljss.sheet.insert_BANG_[goog.typeOf(x__5390__auto__)]);
 if((!((m__5391__auto__ == null)))){
@@ -38,11 +38,11 @@ cljss.sheet.insert_BANG_ = (function cljss$sheet$insert_BANG_(this$,css,cls_name
 if((((!((this$ == null)))) && ((!((this$.cljss$sheet$ISheet$insert_BANG_$arity$3 == null)))))){
 return this$.cljss$sheet$ISheet$insert_BANG_$arity$3(this$,css,cls_name);
 } else {
-return cljss$sheet$ISheet$insert_BANG_$dyn_45945(this$,css,cls_name);
+return cljss$sheet$ISheet$insert_BANG_$dyn_38694(this$,css,cls_name);
 }
 });
 
-var cljss$sheet$ISheet$flush_BANG_$dyn_45948 = (function (this$){
+var cljss$sheet$ISheet$flush_BANG_$dyn_38695 = (function (this$){
 var x__5390__auto__ = (((this$ == null))?null:this$);
 var m__5391__auto__ = (cljss.sheet.flush_BANG_[goog.typeOf(x__5390__auto__)]);
 if((!((m__5391__auto__ == null)))){
@@ -60,11 +60,11 @@ cljss.sheet.flush_BANG_ = (function cljss$sheet$flush_BANG_(this$){
 if((((!((this$ == null)))) && ((!((this$.cljss$sheet$ISheet$flush_BANG_$arity$1 == null)))))){
 return this$.cljss$sheet$ISheet$flush_BANG_$arity$1(this$);
 } else {
-return cljss$sheet$ISheet$flush_BANG_$dyn_45948(this$);
+return cljss$sheet$ISheet$flush_BANG_$dyn_38695(this$);
 }
 });
 
-var cljss$sheet$ISheet$filled_QMARK_$dyn_45949 = (function (this$){
+var cljss$sheet$ISheet$filled_QMARK_$dyn_38699 = (function (this$){
 var x__5390__auto__ = (((this$ == null))?null:this$);
 var m__5391__auto__ = (cljss.sheet.filled_QMARK_[goog.typeOf(x__5390__auto__)]);
 if((!((m__5391__auto__ == null)))){
@@ -82,7 +82,7 @@ cljss.sheet.filled_QMARK_ = (function cljss$sheet$filled_QMARK_(this$){
 if((((!((this$ == null)))) && ((!((this$.cljss$sheet$ISheet$filled_QMARK_$arity$1 == null)))))){
 return this$.cljss$sheet$ISheet$filled_QMARK_$arity$1(this$);
 } else {
-return cljss$sheet$ISheet$filled_QMARK_$dyn_45949(this$);
+return cljss$sheet$ISheet$filled_QMARK_$dyn_38699(this$);
 }
 });
 
@@ -106,8 +106,8 @@ throw (new Error(["A stylesheet can only have ",cljs.core.str.cljs$core$IFn$_inv
 } else {
 }
 
-if(cljs.core.truth_((function (){var fexpr__45943 = cljs.core.deref(self__.cache);
-return (fexpr__45943.cljs$core$IFn$_invoke$arity$1 ? fexpr__45943.cljs$core$IFn$_invoke$arity$1(cls_name) : fexpr__45943.call(null, cls_name));
+if(cljs.core.truth_((function (){var fexpr__38634 = cljs.core.deref(self__.cache);
+return (fexpr__38634.cljs$core$IFn$_invoke$arity$1 ? fexpr__38634.cljs$core$IFn$_invoke$arity$1(cls_name) : fexpr__38634.call(null, cls_name));
 })())){
 return null;
 } else {
@@ -119,7 +119,7 @@ if(cljss.utils.dev_QMARK_){
 return goog.dom.appendChild(self__.tag,goog.dom.createTextNode(rule__$1));
 } else {
 try{return self__.sheet.insertRule(rule__$1,rules_count);
-}catch (e45944){var e = e45944;
+}catch (e38669){var e = e38669;
 if(cljss.utils.dev_QMARK_){
 return console.warn("Illegal CSS rule",rule__$1);
 } else {
