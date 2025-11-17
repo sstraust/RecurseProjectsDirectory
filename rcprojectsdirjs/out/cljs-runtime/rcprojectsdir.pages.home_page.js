@@ -7,100 +7,100 @@ rcprojectsdir.pages.home_page.update_project = (function rcprojectsdir$pages$hom
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"form.w-full.px-16","form.w-full.px-16",-1827883275),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"on-submit","on-submit",1227871159),(function (e){
 e.preventDefault();
 
-var c__35125__auto__ = cljs.core.async.chan.cljs$core$IFn$_invoke$arity$1((1));
+var c__30817__auto__ = cljs.core.async.chan.cljs$core$IFn$_invoke$arity$1((1));
 cljs.core.async.impl.dispatch.run((function (){
-var f__35126__auto__ = (function (){var switch__35008__auto__ = (function (state_39845){
-var state_val_39846 = (state_39845[(1)]);
-if((state_val_39846 === (1))){
-var inst_39834 = [new cljs.core.Keyword(null,"form-params","form-params",1884296467)];
-var inst_39835 = [new cljs.core.Keyword(null,"project-description","project-description",-1105609541)];
-var inst_39836 = ["hello"];
-var inst_39837 = cljs.core.PersistentHashMap.fromArrays(inst_39835,inst_39836);
-var inst_39838 = [inst_39837];
-var inst_39839 = cljs.core.PersistentHashMap.fromArrays(inst_39834,inst_39838);
-var inst_39840 = cljs_http.client.post.cljs$core$IFn$_invoke$arity$variadic("/newProject",cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([inst_39839], 0));
-var state_39845__$1 = state_39845;
-return cljs.core.async.impl.ioc_helpers.take_BANG_(state_39845__$1,(2),inst_39840);
+var f__30818__auto__ = (function (){var switch__30308__auto__ = (function (state_41433){
+var state_val_41434 = (state_41433[(1)]);
+if((state_val_41434 === (1))){
+var inst_41422 = [new cljs.core.Keyword(null,"form-params","form-params",1884296467)];
+var inst_41423 = [new cljs.core.Keyword(null,"project-description","project-description",-1105609541)];
+var inst_41424 = ["hello"];
+var inst_41425 = cljs.core.PersistentHashMap.fromArrays(inst_41423,inst_41424);
+var inst_41426 = [inst_41425];
+var inst_41427 = cljs.core.PersistentHashMap.fromArrays(inst_41422,inst_41426);
+var inst_41428 = cljs_http.client.post.cljs$core$IFn$_invoke$arity$variadic("/newProject",cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([inst_41427], 0));
+var state_41433__$1 = state_41433;
+return cljs.core.async.impl.ioc_helpers.take_BANG_(state_41433__$1,(2),inst_41428);
 } else {
-if((state_val_39846 === (2))){
-var inst_39842 = (state_39845[(2)]);
-var inst_39843 = console.log(inst_39842);
-var state_39845__$1 = state_39845;
-return cljs.core.async.impl.ioc_helpers.return_chan(state_39845__$1,inst_39843);
+if((state_val_41434 === (2))){
+var inst_41430 = (state_41433[(2)]);
+var inst_41431 = console.log(inst_41430);
+var state_41433__$1 = state_41433;
+return cljs.core.async.impl.ioc_helpers.return_chan(state_41433__$1,inst_41431);
 } else {
 return null;
 }
 }
 });
 return (function() {
-var rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__ = null;
-var rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____0 = (function (){
-var statearr_39847 = [null,null,null,null,null,null,null];
-(statearr_39847[(0)] = rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__);
+var rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__ = null;
+var rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____0 = (function (){
+var statearr_41435 = [null,null,null,null,null,null,null];
+(statearr_41435[(0)] = rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__);
 
-(statearr_39847[(1)] = (1));
+(statearr_41435[(1)] = (1));
 
-return statearr_39847;
+return statearr_41435;
 });
-var rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____1 = (function (state_39845){
+var rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____1 = (function (state_41433){
 while(true){
-var ret_value__35010__auto__ = (function (){try{while(true){
-var result__35011__auto__ = switch__35008__auto__(state_39845);
-if(cljs.core.keyword_identical_QMARK_(result__35011__auto__,new cljs.core.Keyword(null,"recur","recur",-437573268))){
+var ret_value__30313__auto__ = (function (){try{while(true){
+var result__30314__auto__ = switch__30308__auto__(state_41433);
+if(cljs.core.keyword_identical_QMARK_(result__30314__auto__,new cljs.core.Keyword(null,"recur","recur",-437573268))){
 continue;
 } else {
-return result__35011__auto__;
+return result__30314__auto__;
 }
 break;
 }
-}catch (e39848){var ex__35012__auto__ = e39848;
-var statearr_39849_39852 = state_39845;
-(statearr_39849_39852[(2)] = ex__35012__auto__);
+}catch (e41436){var ex__30315__auto__ = e41436;
+var statearr_41437_41440 = state_41433;
+(statearr_41437_41440[(2)] = ex__30315__auto__);
 
 
-if(cljs.core.seq((state_39845[(4)]))){
-var statearr_39850_39853 = state_39845;
-(statearr_39850_39853[(1)] = cljs.core.first((state_39845[(4)])));
+if(cljs.core.seq((state_41433[(4)]))){
+var statearr_41438_41441 = state_41433;
+(statearr_41438_41441[(1)] = cljs.core.first((state_41433[(4)])));
 
 } else {
-throw ex__35012__auto__;
+throw ex__30315__auto__;
 }
 
 return new cljs.core.Keyword(null,"recur","recur",-437573268);
 }})();
-if(cljs.core.keyword_identical_QMARK_(ret_value__35010__auto__,new cljs.core.Keyword(null,"recur","recur",-437573268))){
-var G__39854 = state_39845;
-state_39845 = G__39854;
+if(cljs.core.keyword_identical_QMARK_(ret_value__30313__auto__,new cljs.core.Keyword(null,"recur","recur",-437573268))){
+var G__41442 = state_41433;
+state_41433 = G__41442;
 continue;
 } else {
-return ret_value__35010__auto__;
+return ret_value__30313__auto__;
 }
 break;
 }
 });
-rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__ = function(state_39845){
+rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__ = function(state_41433){
 switch(arguments.length){
 case 0:
-return rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____0.call(this);
+return rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____0.call(this);
 case 1:
-return rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____1.call(this,state_39845);
+return rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____1.call(this,state_41433);
 }
 throw(new Error('Invalid arity: ' + arguments.length));
 };
-rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__.cljs$core$IFn$_invoke$arity$0 = rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____0;
-rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__.cljs$core$IFn$_invoke$arity$1 = rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto____1;
-return rcprojectsdir$pages$home_page$update_project_$_state_machine__35009__auto__;
+rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__.cljs$core$IFn$_invoke$arity$0 = rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____0;
+rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__.cljs$core$IFn$_invoke$arity$1 = rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto____1;
+return rcprojectsdir$pages$home_page$update_project_$_state_machine__30312__auto__;
 })()
 })();
-var state__35127__auto__ = (function (){var statearr_39851 = f__35126__auto__();
-(statearr_39851[(6)] = c__35125__auto__);
+var state__30819__auto__ = (function (){var statearr_41439 = f__30818__auto__();
+(statearr_41439[(6)] = c__30817__auto__);
 
-return statearr_39851;
+return statearr_41439;
 })();
-return cljs.core.async.impl.ioc_helpers.run_state_machine_wrapped(state__35127__auto__);
+return cljs.core.async.impl.ioc_helpers.run_state_machine_wrapped(state__30819__auto__);
 }));
 
-return c__35125__auto__;
+return c__30817__auto__;
 })], null),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"input.input.input-bordered.w-full","input.input.input-bordered.w-full",61387221),new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"type","type",1174270348),"text",new cljs.core.Keyword(null,"placeholder","placeholder",-104873083),"Tell us about your project"], null)], null),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"h-box.w-full.justify-end","h-box.w-full.justify-end",44396129),new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"button.btn.btn-primary.mx-1.my-4","button.btn.btn-primary.mx-1.my-4",-1399252254),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"type","type",1174270348),"button"], null),"Create"], null)], null)], null);
 });
 rcprojectsdir.pages.home_page.featured = (function rcprojectsdir$pages$home_page$featured(){

@@ -13,7 +13,7 @@ pom.xml.asc
 .hg/
 .clj-kondo/.cache
 .clj-kondo/imports
-rcprojectsdir/out
+rcprojectsdirjs/out
 build
 www
 rcprojectsdirjs/.cpcache
