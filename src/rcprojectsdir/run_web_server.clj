@@ -102,7 +102,7 @@
         ;; TODO: replace with logged-in user id
         user-id 1
         name    "New project"]
-    (when (seq project-description)
+    (when (string? project-description)
       (create-project! user-id name project-description))
     {:status  200
      :headers {"Content-Type" "application/json"}
