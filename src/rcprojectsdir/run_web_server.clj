@@ -24,18 +24,18 @@
 (defn migrate-v1 []
   (jdbc/execute!
     db-spec
-    ["CREATE TABLE IF NOT EXISTS projects (
+    ["CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT NOT NULL,
         author INTEGER NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         FOREIGN KEY (author) REFERENCES users(id)
-      );
-
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS project_updates (
@@ -57,7 +57,6 @@
  db-spec
  ["SELECT * FROM test_table"])
 
-)
 
 
                
