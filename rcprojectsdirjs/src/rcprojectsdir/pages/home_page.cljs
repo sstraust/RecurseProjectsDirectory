@@ -40,7 +40,7 @@
 (defn update-project []
   (let [desc*         (r/atom "")
         project-name* (r/atom (default-project-name))
-        projects*     (r/atom [])] 
+        projects*     (r/atom [])]
 
     (r/create-class
       {:component-did-mount
@@ -48,7 +48,6 @@
          (go
            (let [resp   (<! (http/get "/getUsersProjects" {:with-credentials? false}))
                  body   (:body resp)
-                 ;; body might be a JS object or a JSON string depending on setup
                  parsed (cond
                           (map? body) body
                           (string? body)
@@ -71,33 +70,35 @@
                    (.log js/console (clj->js result))
                    (reset! desc* "")))))}
 
-          ;; 🔽 Dropdown populated with:
-          ;;   - default "NewProject_MM-DD-YYYY"
-          ;;   - existing project names from the DB
-          [:div.mb-2
-           [:label.block.mb-1.font-semibold "Project"]
-           [:select.select.select-bordered.w-full
-            {:value     @project-name*
-             :on-change #(reset! project-name* (.. % -target -value))}
-            ;; Default option: always available
-            [:option {:value (default-project-name)}
-             (default-project-name)]
-            ;; Existing projects from DB
-            (for [{:keys [id name]} @projects*]
-              ^{:key id}
-              [:option {:value name} name])]]
+          ;; Description input 
+          [:div
+           [:input.input.input-bordered.w-full
+            {:type        "text"
+             :placeholder "Tell us about your project"
+             :value       @desc*
+             :on-change   #(reset! desc* (.. % -target -value))}]]
 
-          ;; Description input
-          [:input.input.input-bordered.w-full
-           {:type        "text"
-            :placeholder "Tell us about your project"
-            :value       @desc*
-            :on-change   #(reset! desc* (.. % -target -value))}]
+          ;; Row with dropdown and button
+          [:div.flex.items-center.justify-between.my-4
+           ;; left side: dropdown 
+           [:div.self-start
+            [:select
+             {:class "select select-bordered select-xs opacity-70 subtle-select"
+             :value @project-name*
+              :on-change #(reset! project-name* (.. % -target -value))}
+             ;; Default option
+             [:option {:value (default-project-name)}
+              (default-project-name)]
+             ;; Existing projects
+             (for [{:keys [id name]} @projects*]
+               ^{:key id}
+               [:option {:value name} name])]]
 
-          [:div.w-full.flex.justify-end
-           [:button.btn.btn-primary.mx-1.my-4
-            {:type "submit"}
-            "Create"]]])})))
+           ;; right side: button
+           [:div
+            [:button.btn.btn-primary
+             {:type "submit"}
+             "Create"]]]])})))
 
 (defn featured []
   [:div.h-64.w-full.bg-base-300.my-2

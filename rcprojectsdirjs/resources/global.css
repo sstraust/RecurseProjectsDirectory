@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.subtle-select,
+.subtle-select option {
+    color: #3e4247;
+    align-self: flex-start;
+    width: 15rem;
+}
