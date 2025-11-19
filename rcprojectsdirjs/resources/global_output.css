@@ -3165,6 +3165,10 @@ details.collapse summary::-webkit-details-marker {
   max-width: 20rem;
 }
 
+.\!max-w-none {
+  max-width: none !important;
+}
+
 .flex-grow {
   flex-grow: 1;
 }

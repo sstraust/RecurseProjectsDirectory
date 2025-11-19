@@ -43,7 +43,7 @@
     [:label "Description"]
     [:div.mr-20.ml-8.mt-2
     [er/text-area
-     {:class "h-24 max-w-none"}
+     {:class "h-24 !max-w-none"}
      (r/cursor project-details-atom [:description])]]]
    [:button.btn.btn-primary.self-end {:type "submit"} "Submit Edits"]])
 
