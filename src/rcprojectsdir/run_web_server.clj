@@ -4,6 +4,7 @@
             [hiccup.page :refer [include-js include-css html5]]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
             [environ.core :refer [env]]))
 
 (def db-spec
@@ -97,13 +98,15 @@
       VALUES (?, ?, ?)"
      name description user-id]))
 
-(defn create-project [params]
-  (let [project-description (get-in params [:params :project-description])
+(defn create-project [request]
+  (let [project-description (get-in request [:params :project-description])
+        project-name        (get-in request [:params :project-name])
         ;; TODO: replace with logged-in user id
-        user-id 1
-        name    "New project"]
-    (when (string? project-description)
-      (create-project! user-id name project-description))
+        user-id             2]
+    (when (and (string? project-description)
+               (string? project-name)
+               (not (str/blank? project-name)))
+      (create-project! user-id project-name project-description))
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:ok true})}))
