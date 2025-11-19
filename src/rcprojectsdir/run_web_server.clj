@@ -97,13 +97,27 @@
       VALUES (?, ?, ?)"
      name description user-id]))
 
+;; (defn create-project [params]
+;;   (let [project-description (get-in params [:params :project-description])
+;;         ;; TODO: replace with logged-in user id
+;;         user-id 1
+;;         today   (java.time.LocalDate/now)
+;;         name    (str "New project " today)]
+;;     (when (seq project-description)
+;;       (create-project! user-id name project-description))
+;;     {:status  200
+;;      :headers {"Content-Type" "application/json"}
+;;      :body    (json/write-str {:ok true})}))
+
 (defn create-project [params]
-  (let [project-description (get-in params [:params :project-description])
+  (let [req-params          (:params params)
+        project-name        (:project-name req-params)
+        project-description (:project-description req-params)
         ;; TODO: replace with logged-in user id
-        user-id 1
-        name    "New project"]
-    (when (seq project-description)
-      (create-project! user-id name project-description))
+        user-id             1]
+    (when (and (seq project-name)
+               (seq project-description))
+      (create-project! user-id project-name project-description))
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:ok true})}))
