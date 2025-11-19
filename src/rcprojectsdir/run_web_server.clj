@@ -57,6 +57,12 @@
  db-spec
  ["SELECT * FROM test_table"])
 
+#_(jdbc/execute!
+   db-spec
+   ["INSERT INTO users (id, name) VALUES (?, ?)" 11 "test"])
+
+
+
 
 
                
@@ -108,8 +114,57 @@
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:ok true})}))
 
+
+;; use keyword destructuring to access params
+(defn get-project-details [{{:keys [project-id]} :params}]
+  (let [query-result (first
+                      (jdbc/query
+                       db-spec
+                       ["SELECT name, description, author FROM projects WHERE id = ? LIMIT 1"
+                        (Integer/parseInt project-id)]))]
+    (if query-result 
+      {:status 200
+       :headers {"Content-Type" "application/json"}
+       :body (json/write-str query-result)}
+      {:status 500
+       :headers {"Content-Type" "text/plain"}
+       :body "Failed to Fetch Project"})))
+
+
+
+
+
+(defn edit-project [{{:keys [project-id updates]} :params}]
+  (let [edit-result (jdbc/execute!
+                     db-spec
+                     ["UPDATE projects
+                       SET
+                         name = COALESCE(?, name),
+                         description = COALESCE(?, description)
+                       WHERE id = ?
+                       RETURNING name, description, author;"
+                      (:name updates)
+                      (:description updates)
+                      (Integer/parseInt project-id)])]
+    (if edit-result
+      {:status 200
+       :headers {"Content-Type" "application/json"}
+       :body (json/write-str (first edit-result))}
+      {:status 500
+       :headers {"Content-Type" "text/plain"}
+       :body "Failed to Edit Project"})))
+
+
+
+
+
+
 (defroutes routes
   (GET "/" params (get-main-page params))
+  ;; use frontend routing for requests
+  (GET "/reviewProjectPage" params (get-main-page params))
+  (GET "/getProjectDetails" params (get-project-details params))
+  (POST "/editProject" params (edit-project params))
   (POST "/newProject" params (create-project params)))
 
 (defn run-web-server [input-mode]
@@ -126,3 +181,4 @@
 
 
 ;; (create-project {:params {:project-description "hello"}})
+
