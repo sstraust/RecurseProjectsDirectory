@@ -88,10 +88,25 @@
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})
 
-(defn create-project [params]
-  (let [project-description (:project-description (:params params))]
-    (println (str "the value is: " project-description))))
+(defn create-project!
+  "Create a new project row for the given user id."
+  [user-id name description]
+  (jdbc/execute!
+    db-spec
+    ["INSERT INTO projects (name, description, author)
+      VALUES (?, ?, ?)"
+     name description user-id]))
 
+(defn create-project [params]
+  (let [project-description (get-in params [:params :project-description])
+        ;; TODO: replace with logged-in user id
+        user-id 1
+        name    "New project"]
+    (when (seq project-description)
+      (create-project! user-id name project-description))
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/write-str {:ok true})}))
 
 (defroutes routes
   (GET "/" params (get-main-page params))
