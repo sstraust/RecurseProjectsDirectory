@@ -25,34 +25,8 @@
    [:div "RC Projects"]
    [:div.mx-12 "test: the value of the counter is :" @counter]])
 
-;; (defn update-project []
-;;   (let [desc* (r/atom "")]
-;;     (fn []
-;;       [:form.w-full.px-16
-;;        {:on-submit (fn [e]
-;;                      (.preventDefault e)
-;;                      (when (seq @desc*)
-;;                        (go
-;;                          (let [result (<! (http/post "/newProject"
-;;                                                      {:form-params {:project-description @desc*}}))]
-;;                            (.log js/console (clj->js result))
-;;                            (reset! desc* "")))))}
-;;        [:input.input.input-bordered.w-full
-;;         {:type        "text"
-;;          :placeholder "Tell us about your project"
-;;          :value       @desc*
-;;          :on-change   (fn [e]
-;;                         (reset! desc* (.. e -target -value)))}]
-;;        [:h-box.w-full.justify-end
-;;         [:button.btn.btn-primary.mx-1.my-4
-;;          {:type "submit"}
-;;          "Create"]]])))
-
 (defn update-project []
-  (let [;; Default ex: "New project 2025-11-19"
-        today-str (subs (.toISOString (js/Date.)) 0 10)   ;; "YYYY-MM-DD"
-        name*     (r/atom (str "New project " today-str))
-        desc*     (r/atom "")]
+  (let [desc* (r/atom "")]
     (fn []
       [:form.w-full.px-16
        {:on-submit (fn [e]
@@ -60,19 +34,12 @@
                      (when (seq @desc*)
                        (go
                          (let [result (<! (http/post "/newProject"
-                                                     {:form-params {:project-name        @name*
-                                                                    :project-description @desc*}}))]
+                                                     {:form-params {:project-description @desc*}}))]
                            (.log js/console (clj->js result))
                            (reset! desc* "")))))}
-       [:input.input.input-bordered.w-full.mb-4
+       [:input.input.input-bordered.w-full
         {:type        "text"
-         :placeholder "Project name"
-         :value       @name*
-         :on-change   (fn [e]
-                        (reset! name* (.. e -target -value)))}]
-       [:textarea.textarea.textarea-bordered.w-full
-        {:placeholder "Tell us about your project"
-         :rows        4
+         :placeholder "Tell us about your project"
          :value       @desc*
          :on-change   (fn [e]
                         (reset! desc* (.. e -target -value)))}]
