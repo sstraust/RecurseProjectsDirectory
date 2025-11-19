@@ -39,33 +39,65 @@
 
 (defn update-project []
   (let [desc*         (r/atom "")
-        project-name* (r/atom (default-project-name))]
-    (fn []
-      [:form.w-full.px-16
-       {:on-submit
-        (fn [e]
-          (.preventDefault e)
-          (when (seq @desc*)
-            (go
-              (let [result (<! (http/post "/newProject"
-                                          {:form-params {:project-name        @project-name*
-                                                         :project-description @desc*}}))]
-                (.log js/console (clj->js result))
-                (reset! desc* "")))))}
+        project-name* (r/atom (default-project-name))
+        projects*     (r/atom [])] 
 
-       [:div.mb-2
-        [:span.font-semibold.mr-1 "Project: "]
-        [:span @project-name*]]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (go
+           (let [resp   (<! (http/get "/getUsersProjects" {:with-credentials? false}))
+                 body   (:body resp)
+                 ;; body might be a JS object or a JSON string depending on setup
+                 parsed (cond
+                          (map? body) body
+                          (string? body)
+                          (js->clj (js/JSON.parse body) :keywordize-keys true)
+                          :else {})]
+             (when-let [projects (:projects parsed)]
+               (reset! projects* projects)))))
 
-       [:input.input.input-bordered.w-full
-        {:type        "text"
-         :placeholder "Tell us about your project"
-         :value       @desc*
-         :on-change   #(reset! desc* (.. % -target -value))}]
+       :reagent-render
+       (fn []
+         [:form.w-full.px-16
+          {:on-submit
+           (fn [e]
+             (.preventDefault e)
+             (when (seq @desc*)
+               (go
+                 (let [result (<! (http/post "/newProject"
+                                             {:form-params {:project-name        @project-name*
+                                                            :project-description @desc*}}))]
+                   (.log js/console (clj->js result))
+                   (reset! desc* "")))))}
 
-       [:div.w-full.flex.justify-end
-        [:button.btn.btn-primary.mx-1.my-4
-         {:type "submit"} "Create"]]])))
+          ;; 🔽 Dropdown populated with:
+          ;;   - default "NewProject_MM-DD-YYYY"
+          ;;   - existing project names from the DB
+          [:div.mb-2
+           [:label.block.mb-1.font-semibold "Project"]
+           [:select.select.select-bordered.w-full
+            {:value     @project-name*
+             :on-change #(reset! project-name* (.. % -target -value))}
+            ;; Default option: always available
+            [:option {:value (default-project-name)}
+             (default-project-name)]
+            ;; Existing projects from DB
+            (for [{:keys [id name]} @projects*]
+              ^{:key id}
+              [:option {:value name} name])]]
+
+          ;; Description input
+          [:input.input.input-bordered.w-full
+           {:type        "text"
+            :placeholder "Tell us about your project"
+            :value       @desc*
+            :on-change   #(reset! desc* (.. % -target -value))}]
+
+          [:div.w-full.flex.justify-end
+           [:button.btn.btn-primary.mx-1.my-4
+            {:type "submit"}
+            "Create"]]])})))
 
 (defn featured []
   [:div.h-64.w-full.bg-base-300.my-2
