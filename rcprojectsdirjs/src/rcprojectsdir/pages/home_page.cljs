@@ -26,33 +26,66 @@
 
 (defn update-project []
   (let [desc*         (r/atom "")
-        project-name* (r/atom (default-project-name))]
-    (fn []
-      [:form.w-full.px-16
-       {:on-submit
-        (fn [e]
-          (.preventDefault e)
-          (when (seq @desc*)
-            (go
-              (let [result (<! (http/post "/newProject"
-                                          {:form-params {:project-name        @project-name*
-                                                         :project-description @desc*}}))]
-                (.log js/console (clj->js result))
-                (reset! desc* "")))))}
+        project-name* (r/atom (default-project-name))
+        projects*     (r/atom [])]
 
-       [:div.mb-2
-        [:span.font-semibold.mr-1 "Project: "]
-        [:span @project-name*]]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (go
+           (let [resp   (<! (http/get "/getUsersProjects" {:with-credentials? false}))
+                 body   (:body resp)
+                 parsed (cond
+                          (map? body) body
+                          (string? body)
+                          (js->clj (js/JSON.parse body) :keywordize-keys true)
+                          :else {})]
+             (when-let [projects (:projects parsed)]
+               (reset! projects* projects)))))
 
-       [:input.input.input-bordered.w-full
-        {:type        "text"
-         :placeholder "Tell us about your project"
-         :value       @desc*
-         :on-change   #(reset! desc* (.. % -target -value))}]
+       :reagent-render
+       (fn []
+         [:form.w-full.px-16
+          {:on-submit
+           (fn [e]
+             (.preventDefault e)
+             (when (seq @desc*)
+               (go
+                 (let [result (<! (http/post "/newProject"
+                                             {:form-params {:project-name        @project-name*
+                                                            :project-description @desc*}}))]
+                   (.log js/console (clj->js result))
+                   (reset! desc* "")))))}
 
-       [:div.w-full.flex.justify-end
-        [:button.btn.btn-primary.mx-1.my-4
-         {:type "submit"} "Create"]]])))
+          ;; Description input 
+          [:div
+           [:input.input.input-bordered.w-full
+            {:type        "text"
+             :placeholder "Tell us about your project"
+             :value       @desc*
+             :on-change   #(reset! desc* (.. % -target -value))}]]
+
+          ;; Row with dropdown and button
+          [:div.flex.items-center.justify-between.my-4
+           ;; left side: dropdown 
+           [:div.self-start
+            [:select
+             {:class "select select-bordered select-xs opacity-70 subtle-select"
+             :value @project-name*
+              :on-change #(reset! project-name* (.. % -target -value))}
+             ;; Default option
+             [:option {:value (default-project-name)}
+              (default-project-name)]
+             ;; Existing projects
+             (for [{:keys [id name]} @projects*]
+               ^{:key id}
+               [:option {:value name} name])]]
+
+           ;; right side: button
+           [:div
+            [:button.btn.btn-primary
+             {:type "submit"}
+             "Create"]]]])})))
 
 (defn featured []
   [:div.h-64.w-full.bg-base-300.my-2
