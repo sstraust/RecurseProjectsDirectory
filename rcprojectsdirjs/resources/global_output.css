@@ -3093,6 +3093,22 @@ details.collapse summary::-webkit-details-marker {
   margin-top: 1rem;
 }
 
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-0 {
+  margin-top: 0px;
+}
+
+.mt-0\.5 {
+  margin-top: 0.125rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
 .block {
   display: block;
 }
@@ -3145,6 +3161,14 @@ details.collapse summary::-webkit-details-marker {
   height: 100vh;
 }
 
+.h-8 {
+  height: 2rem;
+}
+
+.h-7 {
+  height: 1.75rem;
+}
+
 .w-full {
   width: 100%;
 }
@@ -3153,20 +3177,16 @@ details.collapse summary::-webkit-details-marker {
   width: 100vw;
 }
 
+.\!max-w-none {
+  max-width: none !important;
+}
+
 .max-w-5xl {
   max-width: 64rem;
 }
 
-.max-w-none {
-  max-width: none;
-}
-
 .max-w-xs {
   max-width: 20rem;
-}
-
-.\!max-w-none {
-  max-width: none !important;
 }
 
 .flex-grow {
@@ -3238,6 +3258,16 @@ details.collapse summary::-webkit-details-marker {
 .text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
 }
 
 .uppercase {

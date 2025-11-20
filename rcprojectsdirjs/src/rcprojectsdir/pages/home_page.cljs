@@ -22,8 +22,10 @@
                        (go
                          (let [result (<! (http/post "/newProject"
                                                      {:form-params {:project-description @desc*}}))]
-                           (.log js/console (clj->js result))
-                           (reset! desc* "")))))}
+
+                           (when (= (:status result) 200)
+                             (set! (.-href (.-location js/window))
+                                   (str "/reviewProjectPage?project=" (:project-id (:body result)))))))))}
        [:input.input.input-bordered.w-full
         {:type        "text"
          :placeholder "Tell us about your project"

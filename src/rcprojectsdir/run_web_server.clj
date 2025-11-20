@@ -97,22 +97,25 @@
 (defn create-project!
   "Create a new project row for the given user id."
   [user-id name description]
-  (jdbc/execute!
-    db-spec
-    ["INSERT INTO projects (name, description, author)
-      VALUES (?, ?, ?)"
-     name description user-id]))
+  (jdbc/insert!
+   db-spec
+   :projects
+   {:name name
+    :description description
+    :author user-id}))
 
 (defn create-project [params]
   (let [project-description (get-in params [:params :project-description])
         ;; TODO: replace with logged-in user id
         user-id 1
-        name    "New project"]
+        name    (str "New project" (rand-int 10000))]
     (when (string? project-description)
-      (create-project! user-id name project-description))
-    {:status  200
-     :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:ok true})}))
+      (when-let [result (first (create-project! user-id name project-description))]
+        (def ww result)
+        {:status  200
+         :headers {"Content-Type" "application/json"}
+         :body    (json/write-str {:ok true
+                                   :project-id (:id result)})}))))
 
 
 ;; use keyword destructuring to access params

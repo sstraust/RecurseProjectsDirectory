@@ -35,9 +35,9 @@
                          (.reload js/location)
                          (js/alert "failed to save!"))))))}
    [:h-box.self-stretch.items-center.text-2xl
-    [:label.mr-2 "Title: "]
+    [:div.mb-1 [:label.mr-2 "Title: "]]
     [er/text-field
-     {:class "text-2xl h-9"}
+     {:class "text-lg h-8"}
      (r/cursor project-details-atom [:name])]]
    [:v-box.my-6.self-stretch.text-xl
     [:label "Description"]
@@ -58,7 +58,7 @@
       ;; TODO standardize this into a top-level page wrapper
       [:v-box.w-screen.w-screen.items-center.h-screen
        [:v-box.w-screen.h-full.max-w-5xl
-        [:div.text-xl.mt-4 "Your project has been created!"]
+        [:div.text-3xl.mt-4 "Your project has been created!"]
         [:div.mx-4.text-xs "If you'd like, you can edit it to add more details."]
         (cond
           (not @project-details-atom)
