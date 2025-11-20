@@ -95,6 +95,16 @@
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})
 
+(defn get-users-projects
+  "HTTP handler: return projects for current user-id (hardcoded)"
+  [request]
+  (let [user-id  2
+        projects (jdbc/query db-spec
+                             ["SELECT * FROM projects WHERE author = ?" user-id])]
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/write-str {:projects projects})}))
+
 (defn create-project!
   "Create a new project row for the given user id."
   [user-id name description]
@@ -164,10 +174,14 @@
 
 (defroutes routes
   (GET "/" params (get-main-page params))
+<<<<<<< HEAD
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
+=======
+  (GET "/getUsersProjects" params (get-users-projects params))
+>>>>>>> 00fe7cf (This should have been part of that commit)
   (POST "/newProject" params (create-project params)))
 
 (defn run-web-server [input-mode]
