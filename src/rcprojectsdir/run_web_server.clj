@@ -174,14 +174,11 @@
 
 (defroutes routes
   (GET "/" params (get-main-page params))
-<<<<<<< HEAD
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
-=======
-  (GET "/getUsersProjects" params (get-users-projects params))
->>>>>>> 00fe7cf (This should have been part of that commit)
+  (GET "/getUsersProjects" params (get-users-projects params))  
   (POST "/newProject" params (create-project params)))
 
 (defn run-web-server [input-mode]
