@@ -125,12 +125,16 @@
          :body "Failed to Fetch Project"}
         (do
           (let [db-result (create-user-if-not-exists parsed-response)]
-            (assoc
-             (response/redirect "/")
-             :session
-             {:name (:name parsed-response)
-              :db_id (:id db-result)
-              :recurse_id (:id parsed-response)})))))))
+            (if (not db-result)
+              {:status 500
+               :headers {"Content-Type" "text/plain"}
+               :body "Failed to fetch user in database"}
+              (assoc
+               (response/redirect "/")
+               :session
+               {:name (:name parsed-response)
+                :db_id (:id db-result)
+                :recurse_id (:id parsed-response)}))))))))
 
 
 
@@ -252,9 +256,6 @@
       (handler request)
       (response/redirect "/redirect"))))
 
-
-
-{:name "Sam Straus", :db_id nil, :recurse_id 6277}
 
 (defroutes public-routes
   (GET "/redirect" params (redirect-to-oauth))
