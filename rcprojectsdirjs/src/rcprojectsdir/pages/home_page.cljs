@@ -33,15 +33,14 @@
       {:component-did-mount
        (fn []
          (go
-          ;;  (let [resp   (<! (http/get "/getUsersProjects"))
-           (let [resp   (<! (http/get "/getUsersProjects" {:with-credentials? false}))
-                ;;  body   (:body resp)
-                ;;  parsed (cond
-                ;;           (map? body) body
-                ;;           (string? body)
-                ;;           (js->clj (js/JSON.parse body) :keywordize-keys true)
-                ;;           :else {})]
-                 body   (:body resp)]
+           (let [resp   (<! (http/get "/getUsersProjects"))
+                 body   (:body resp)
+                 parsed (cond
+                          (map? body) body
+                          (string? body)
+                          (js->clj (js/JSON.parse body) :keywordize-keys true)
+                          :else {})]
+                ;;  body   (:body resp)]
              (when-let [projects (:projects parsed)]
                (reset! projects* projects)))))
 
@@ -57,19 +56,16 @@
                (go
                  (let [result (<! (http/post "/newProject"
                                              {:form-params {:project-name        @project-name*
-                                                            ;; :project-description @desc*}}))
-                                                            :project-description @desc*}}))]
-                   (.log js/console (clj->js result))
-                   (reset! desc* "")))))}
-                      ;; status (:status result)
-                      ;; body   (some-> (:body result) (js/JSON.parse) (js->clj :keywordize-keys true))]
-                    ;; (if (= status 200)
-                    ;;   (do 
-                    ;;     (reset! desc* "")
-                    ;;     (js/alert "Project created!"))
-                    ;;   (do
-                    ;;     (.error js/console "Failed to create project" (clj->js result))
-                    ;;     (js/alert (or (:error body) "Something went wrong creating your project."))))))))}
+                                                            :project-description @desc*}}))
+                      status (:status result)
+                      body   (some-> (:body result) (js/JSON.parse) (js->clj :keywordize-keys true))]
+                    (if (= status 200)
+                      (do 
+                        (reset! desc* "")
+                        (js/alert "Project created!"))
+                      (do
+                        (.error js/console "Failed to create project" (clj->js result))
+                        (js/alert (or (:error body) "Something went wrong creating your project."))))))))}
 
           ;; Description input 
           [:div

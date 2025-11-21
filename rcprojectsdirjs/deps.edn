@@ -8,4 +8,4 @@
          reagent/reagent {:mvn/version "1.1.1"}
          thheller/shadow-cljs {:mvn/version "2.28.4"}
          io.github.sstraust/easyreagent {:git/url "https://github.com/sstraust/easyreagent.git"
-                                         :git/sha "10149cde75531d8526062a8fbde3db773588038e"}}}
+                                         :git/sha "e021eac20535288c5c3702d4c9e018df94be0b86"}}}

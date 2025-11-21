@@ -118,41 +118,21 @@
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
         ;; TODO: replace with logged-in user id
-        ;; user-id             fake-user-id]
-        user-id             2]
-    (when (and (string? project-description)
-               (string? project-name)
-               (not (str/blank? project-name)))
-      (create-project! user-id project-name project-description))
-    {:status  200
-     :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:ok true})}))
-    ;; (try
-    ;;   (when (and (string? project-description)
-    ;;             (string? project-name)
-    ;;             (not (str/blank? project-name)))
-    ;;     (create-project! user-id project-name project-description))
-    ;;   {:status  200
-    ;;   :headers {"Content-Type" "application/json"}
-    ;;   :body    (json/write-str {:ok true})}
+        user-id             fake-user-id]
+    (try
+      (when (and (string? project-description)
+                (string? project-name)
+                (not (str/blank? project-name)))
+        (create-project! user-id project-name project-description))
+      {:status  200
+      :headers {"Content-Type" "application/json"}
+      :body    (json/write-str {:ok true})}
       
-    ;;   (catch Exception e
-    ;;     {:status  500
-    ;;     :headers  {"Content-Type" "application/json"}
-    ;;     :body     (json/write-str {:ok  false
-    ;;                               :error "Failed to create project"})}))))
-
-
-
-
-
-
-
-
-
-
-
-
+      (catch Exception e
+        {:status  500
+        :headers  {"Content-Type" "application/json"}
+        :body     (json/write-str {:ok  false
+                                  :error "Failed to create project"})}))))
 
 
 
