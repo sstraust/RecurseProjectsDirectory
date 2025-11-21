@@ -120,7 +120,6 @@
       (include-js "/prod_js/main.js"))]))
 
 (defn get-main-page [params]
-  (println params)
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})

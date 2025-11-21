@@ -34,6 +34,18 @@ Stop the database:
 docker compose down
 ```
 
+### Setting up Auth with RC
+Follow the instructions at https://www.recurse.com/settings/apps to register your app for recurse.
+
+To develop locally, create an oauth application, and set the redirect URI to "http://localhost:8001/handleRedirectResponse"  You can name it anything you want.
+
+Then copy the generated id and secret to your .env file
+
+RECURSE_CLIENT_ID= _the client id_
+RECURSE_CLIENT_SECRET=_the client secret_
+
+
+
 ### Starting the Application
 
 Start the ClojureScript compiler (optional, for live frontend updates):

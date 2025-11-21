@@ -14,7 +14,6 @@
 
 (defn user-details []
   (let [user-details-atom (r/atom nil)]
-    (def mm user-details-atom)
     (get-user-details user-details-atom)
     (fn []
       [:div (or (first (clojure.string/split (:name @user-details-atom) #" ")) "loading...")])))
@@ -23,8 +22,4 @@
 (defn full-navbar []
   [:div.navbar.text-xl
    [:div "RC Projects"]
-   [:h-box.flex-grow.justify-end.text-xs.text-accent.items-start [user-details]]
-   ])
-
-
-
+   [:h-box.flex-grow.justify-end.text-xs.text-accent.items-start [user-details]]])
