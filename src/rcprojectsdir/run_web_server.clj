@@ -4,6 +4,7 @@
             [hiccup.page :refer [include-js include-css html5]]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
             [environ.core :refer [env]]))
 
 (def db-spec
@@ -68,7 +69,7 @@
                
 
 
-
+(def fake-user-id 2)
 
 (defn head []
   [:head
@@ -94,6 +95,16 @@
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})
 
+(defn get-users-projects
+  "HTTP handler: return projects for current user-id (hardcoded)"
+  [request]
+  (let [user-id  fake-user-id
+        projects (jdbc/query db-spec
+                             ["SELECT * FROM projects WHERE author = ?" user-id])]
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/write-str {:projects projects})}))
+
 (defn create-project!
   "Create a new project row for the given user id."
   [user-id name description]
@@ -103,16 +114,26 @@
       VALUES (?, ?, ?)"
      name description user-id]))
 
-(defn create-project [params]
-  (let [project-description (get-in params [:params :project-description])
+(defn create-project [request]
+  (let [project-description (get-in request [:params :project-description])
+        project-name        (get-in request [:params :project-name])
         ;; TODO: replace with logged-in user id
-        user-id 1
-        name    "New project"]
-    (when (string? project-description)
-      (create-project! user-id name project-description))
-    {:status  200
-     :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:ok true})}))
+        user-id             fake-user-id]
+    (try
+      (when (and (string? project-description)
+                (string? project-name)
+                (not (str/blank? project-name)))
+        (create-project! user-id project-name project-description))
+      {:status  200
+      :headers {"Content-Type" "application/json"}
+      :body    (json/write-str {:ok true})}
+      
+      (catch Exception e
+        {:status  500
+        :headers  {"Content-Type" "application/json"}
+        :body     (json/write-str {:ok  false
+                                  :error "Failed to create project"})}))))
+
 
 
 ;; use keyword destructuring to access params
@@ -165,6 +186,7 @@
   (GET "/reviewProjectPage" params (get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
+  (GET "/getUsersProjects" params (get-users-projects params))  
   (POST "/newProject" params (create-project params)))
 
 (defn run-web-server [input-mode]
