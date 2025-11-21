@@ -69,7 +69,7 @@
                
 
 
-
+(def fake-user-id 2)
 
 (defn head []
   [:head
@@ -98,7 +98,7 @@
 (defn get-users-projects
   "HTTP handler: return projects for current user-id (hardcoded)"
   [request]
-  (let [user-id  2
+  (let [user-id  fake-user-id
         projects (jdbc/query db-spec
                              ["SELECT * FROM projects WHERE author = ?" user-id])]
     {:status  200
@@ -118,6 +118,7 @@
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
         ;; TODO: replace with logged-in user id
+        ;; user-id             fake-user-id]
         user-id             2]
     (when (and (string? project-description)
                (string? project-name)
@@ -126,6 +127,33 @@
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:ok true})}))
+    ;; (try
+    ;;   (when (and (string? project-description)
+    ;;             (string? project-name)
+    ;;             (not (str/blank? project-name)))
+    ;;     (create-project! user-id project-name project-description))
+    ;;   {:status  200
+    ;;   :headers {"Content-Type" "application/json"}
+    ;;   :body    (json/write-str {:ok true})}
+      
+    ;;   (catch Exception e
+    ;;     {:status  500
+    ;;     :headers  {"Content-Type" "application/json"}
+    ;;     :body     (json/write-str {:ok  false
+    ;;                               :error "Failed to create project"})}))))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ;; use keyword destructuring to access params
