@@ -1,12 +1,45 @@
 (ns rcprojectsdir.run-web-server
-  (:require [compojure.core :refer [defroutes GET POST]]
-            [easyreagentserver.core :as er-server]
-            [hiccup.page :refer [include-js include-css html5]]
-            [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
-            [environ.core :refer [env]]))
+  (:require
+   [clojure.data.json :as json]
+   [clojure.java.jdbc :as jdbc]
+   [compojure.core :refer [defroutes GET POST]]
+   [easyreagentserver.core :as er-server]
+   [ring.util.response :as response]
+   [environ.core :refer [env]]
+   [hiccup.page :refer [html5 include-css include-js]]
+   [libpython-clj2.python :as py]
+   [libpython-clj2.require :refer [require-python]]))
 
+(require-python '[requests_oauthlib :refer [OAuth2Session]])
+(require-python 'os)
+(require-python '[json :as py-json])
+
+
+(def recurse-auth-url "https://www.recurse.com/oauth/authorize")
+(def recurse-token-url "https://www.recurse.com//oauth/token")
+(def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
+
+
+(defn redirect-to-oauth []
+  (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+    (response/redirect (first (py/py. oauth-obj authorization_url
+                                recurse-auth-url)))))
+
+(defn handle-redirect-response [params]
+  (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
+                          (get-in params [:headers "host"]) "/" (get params :uri) "?" (get params :query-string))
+        authorizer (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+    (py/py. authorizer fetch_token
+            recurse-token-url
+            :client_secret (:recurse-client-secret env)
+            :authorization_response response-url)
+    (let [user-info (py/py. authorizer get "https://www.recurse.com/api/v1/profiles/me")
+          parsed-response (medley.core/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
+      ;; TODO create a database user if one does not already exist
+      (assoc
+       (response/redirect "/")
+       :session (select-keys parsed-response [:name :id])))))
+    
 (def db-spec
   {:dbtype "postgresql"
    :dbname (env :postgres-db "rcprojectsdir")
@@ -64,11 +97,6 @@
 
 
 
-
-
-               
-
-
 (def fake-user-id 2)
 
 (defn head []
@@ -91,6 +119,7 @@
       (include-js "/prod_js/main.js"))]))
 
 (defn get-main-page [params]
+  (println params)
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})
@@ -122,7 +151,7 @@
     (try
       (when (and (string? project-description)
                 (string? project-name)
-                (not (str/blank? project-name)))
+                (not (clojure.string/blank? project-name)))
         (create-project! user-id project-name project-description))
       {:status  200
       :headers {"Content-Type" "application/json"}
@@ -176,31 +205,60 @@
        :body "Failed to Edit Project"})))
 
 
+(defn get-curr-user-info [params]
+  (def a8 params)
+  {:status 200
+   :headers {"Content-Type" "application/json"}
+   :body (json/write-str (select-keys (:session params) [:id :name]))})
 
 
 
+(defn login-redirect [handler]
+  (def aa handler)
+  
+  (fn [request]
+    (if (get-in request [:session :id])
+      ;; TODO also check that the user exists in the database
+      (handler request)
+      (response/redirect "/redirect"))))
+  
 
-(defroutes routes
+
+(defroutes public-routes
+  (GET "/redirect" params (redirect-to-oauth))
+  (GET "/handleRedirectResponse" params (handle-redirect-response params)))
+
+
+(defroutes private-routes
   (GET "/" params (get-main-page params))
+  (GET "/currUserInfo" params (get-curr-user-info params))
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
   (GET "/getUsersProjects" params (get-users-projects params))  
   (POST "/newProject" params (create-project params)))
+  
+
+
+(def all-routes
+  (compojure.core/routes
+   public-routes
+   (compojure.core/wrap-routes
+    private-routes
+    login-redirect)))
+  
 
 (defn run-web-server [input-mode]
   (when input-mode (reset! er-server/MODE input-mode))
+  (when (= input-mode :dev)
+    (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
   (er-server/run-web-server
-   "rcprojectsdirjs" routes
+   "rcprojectsdirjs" all-routes
    {:port 8001
     :join? false
     :headerBufferSize 1048576}))
 
 
 ;; (run-web-server :dev)
-
-
-;; (create-project {:params {:project-description "hello"}})
-
