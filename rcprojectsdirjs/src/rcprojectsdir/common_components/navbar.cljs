@@ -16,7 +16,7 @@
   (let [user-details-atom (r/atom nil)]
     (get-user-details user-details-atom)
     (fn []
-      [:div (or (first (clojure.string/split (:name @user-details-atom) #" ")) "loading...")])))
+      [:div (first (clojure.string/split (or (:name @user-details-atom) "") #" "))])))
 
 
 (defn full-navbar []

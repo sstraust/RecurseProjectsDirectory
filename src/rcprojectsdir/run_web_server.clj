@@ -16,7 +16,7 @@
 
 
 (def recurse-auth-url "https://www.recurse.com/oauth/authorize")
-(def recurse-token-url "https://www.recurse.com//oauth/token")
+(def recurse-token-url "https://www.recurse.com/oauth/token")
 (def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
 
 (def fake-user-id 2)
