@@ -19,8 +19,6 @@
 (def recurse-token-url "https://www.recurse.com/oauth/token")
 (def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
 
-(def fake-user-id 2)
-
 
 (def db-spec
   {:dbtype "postgresql"
@@ -64,6 +62,12 @@
         FOREIGN KEY (author) REFERENCES users(id)
       );"]))
 
+(defn migrate-v2 []
+  (jdbc/execute!
+   db-spec 
+   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
+
+
 
 #_(jdbc/execute!
  db-spec
@@ -77,11 +81,30 @@
    db-spec
    ["INSERT INTO users (id, name) VALUES (?, ?)" 2 "test"])
 
+#_(jdbc/execute!
+   db-spec
+   ["DROP TABLE  users CASCADE"])
+;; (create-user-if-not-exists {:name "test" :id 123})
+
+
 
 (defn redirect-to-oauth []
   (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
     (response/redirect (first (py/py. oauth-obj authorization_url
                                 recurse-auth-url)))))
+
+(defn create-user-if-not-exists [{:keys [name id] :as recurse-info}]
+  (first (jdbc/query
+   db-spec
+   ["INSERT INTO users (name, recurse_id)
+     VALUES (?, ?)
+     ON CONFLICT (recurse_id)
+     DO UPDATE SET recurse_id = EXCLUDED.recurse_id
+     RETURNING *"
+    name
+    id])))
+                     
+  
 
 (defn handle-redirect-response [params]
   (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
@@ -93,10 +116,23 @@
             :authorization_response response-url)
     (let [user-info (py/py. authorizer get "https://www.recurse.com/api/v1/profiles/me")
           parsed-response (medley.core/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
-      ;; TODO create a database user if one does not already exist
-      (assoc
-       (response/redirect "/")
-       :session (select-keys parsed-response [:name :id])))))
+      (if (not (and (:name parsed-response)
+                    (:id parsed-response)))
+        {:status 500
+         :headers {"Content-Type" "text/plain"}
+         :body "Failed to Fetch Project"}
+        (do
+          (let [db-result (create-user-if-not-exists parsed-response)]
+            (if (not db-result)
+              {:status 500
+               :headers {"Content-Type" "text/plain"}
+               :body "Failed to fetch user in database"}
+              (assoc
+               (response/redirect "/")
+               :session
+               {:name (:name parsed-response)
+                :db_id (:id db-result)
+                :recurse_id (:id parsed-response)}))))))))
 
 
 
@@ -127,7 +163,7 @@
 (defn get-users-projects
   "HTTP handler: return projects for current user-id (hardcoded)"
   [request]
-  (let [user-id  fake-user-id
+  (let [user-id  (:db_id (:session request))
         projects (jdbc/query db-spec
                              ["SELECT * FROM projects WHERE author = ?" user-id])]
     {:status  200
@@ -147,7 +183,7 @@
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
         ;; TODO: replace with logged-in user id
-        user-id             fake-user-id]
+        user-id             (:db_id (:session request))]
     (try
       (when (and (string? project-description)
                 (string? project-name)
@@ -160,9 +196,8 @@
       (catch Exception e
         (println e)
         {:status  500
-        :headers  {"Content-Type" "application/json"}
-        :body     (json/write-str {:ok  false
-                                  :error "Failed to create project"})}))))
+        :headers  {"Content-Type" "text/plain"}
+         :body    "Failed to create project"}))))
 
 
 
@@ -215,12 +250,9 @@
 
 (defn login-redirect [handler]
   (fn [request]
-    (if (get-in request [:session :id])
-      ;; TODO also check that the user exists in the database
+    (if (get-in request [:session :recurse_id])
       (handler request)
       (response/redirect "/redirect"))))
-  
-
 
 (defroutes public-routes
   (GET "/redirect" params (redirect-to-oauth))
@@ -252,6 +284,7 @@
   (when (= input-mode :dev)
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
+  (migrate-v2)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
