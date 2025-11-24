@@ -2,15 +2,13 @@
   (:require [reagent.core :as r]
             [cljs-http.client :as http]
             [easyreagent.components]
+            [rcprojectsdir.common-components.navbar :as navbar]
             [cljs.core.async :refer [<!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (def counter (r/atom 0))
 
-(defn navbar []
-  [:div.navbar.text-xl
-   [:div "RC Projects"]
-   [:div.mx-12 "test: the value of the counter is :" @counter]])
+
 
 (defn compact-date []
   ;; "MM-DD-YYYY"
@@ -113,7 +111,7 @@
 (defn home-page []
   [:v-box.w-screen.w-screen.items-center.h-screen
    [:v-box.w-screen.h-full.max-w-5xl
-    [navbar]
+    [navbar/full-navbar]
     [update-project]
     [featured]
     [feed]]])
