@@ -250,8 +250,7 @@
 
 (defn login-redirect [handler]
   (fn [request]
-    (if (get-in request [:session :id])
-      ;; TODO also check that the user exists in the database
+    (if (get-in request [:session :recurse_id])
       (handler request)
       (response/redirect "/redirect"))))
 
