@@ -89,11 +89,11 @@
 ;; (create-user-if-not-exists {:name "test" :id 123})
 
 
+
 (defn redirect-to-oauth []
   (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
     (response/redirect (first (py/py. oauth-obj authorization_url
                                 recurse-auth-url)))))
-
 
 (defn create-user-if-not-exists [{:keys [name id] :as recurse-info}]
   (first (jdbc/query
@@ -252,10 +252,10 @@
 
 (defn login-redirect [handler]
   (fn [request]
-    (if (and (get-in request [:session :recurse_id]))
+    (if (get-in request [:session :id])
+      ;; TODO also check that the user exists in the database
       (handler request)
       (response/redirect "/redirect"))))
-
 
 (defroutes public-routes
   (GET "/redirect" params (redirect-to-oauth))
