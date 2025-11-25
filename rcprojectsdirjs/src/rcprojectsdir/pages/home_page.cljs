@@ -3,6 +3,7 @@
             [cljs-http.client :as http]
             [easyreagent.components]
             [rcprojectsdir.common-components.navbar :as navbar]
+            [easyreagent.components :as er]
             [cljs.core.async :refer [<!]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
@@ -19,8 +20,10 @@
         pad-2 (fn [s] (if (< (count s) 2) (str "0" s) s))]
     (str (pad-2 mm) "-" (pad-2 dd) "-" yyyy)))
 
+(def rand-name-str (memoize (fn [] (rand-int 1000))))
+  
 (defn default-project-name []
-  (str "NewProject_" (compact-date)))
+  (str "NewProject_" (compact-date) "#" (rand-name-str)))
 
 (defn get-users-projects [projects*]
   (go
@@ -36,17 +39,18 @@
           (reset! projects* projects))))
 )
 
-(defn create-project-fn [project-name* desc*]
+(defn create-project-fn [selected-project-id* projects* desc*]
   (fn [e]
     (.preventDefault e)
-    ;; (js/alert "hi")
-    (.log js/console "hi2")
-        (when-not (seq @desc*)
+    (when-not (seq @desc*)
           (js/alert "Please enter a description for your project"))
         (when (seq @desc*)
           (go
             (let [result (<! (http/post "/newProject"
-                                        {:form-params {:project-name        @project-name*
+                                        {:form-params {:project-name        (or
+                                                                             (some
+                                                                              (fn [x] (:name (= (:id x) @selected-project-id*))) @projects*)
+                                                                             (default-project-name))
                                                        :project-description @desc*}}))
                   status (:status result)
                   body   (some-> (:body result)
@@ -57,21 +61,28 @@
                                    (str "/reviewProjectPage?project=" (:project-id (:body result)))))
                 (do
                   (.error js/console "Failed to create project" (clj->js result))
-                  (js/alert (or (:error body) "Something went wrong creating your project."))))))))
-)
+                  (js/alert (or (:error body) "Something went wrong creating your project.")))))))))
 
-(defn update-project []
-  (let [desc*         (r/atom "")
-        project-name* (r/atom (default-project-name))
-        projects*     (r/atom [])]
 
-    (get-users-projects projects*)
+(defn select-project-dropdown [selected-project-id* projects*]
+  [:div.self-start
+      [:select
+        {:class "select select-bordered select-xs opacity-70 subtle-select"
+        :value @selected-project-id*
+        :on-change #(reset! selected-project-id* (js/parseInt (.. % -target -value)))}
+        ;; Default option
+        [:option {:value -1}
+        (default-project-name)]
+        ;; Existing projects
+        (for [{:keys [id name]} @projects*]
+          ^{:key id}
+          [:option {:value id} name])]])
 
-  (fn []
-    [:form.w-full.px-16
-    {:on-submit
-      (create-project-fn project-name* desc*)
-    }
+
+(defn create-project-view [desc* selected-project-id* projects*]
+  [:form.w-full.px-16
+     {:on-submit
+      (create-project-fn selected-project-id* projects* desc*)}
 
     ;; Description input 
     [:div
@@ -84,24 +95,54 @@
     ;; Row with dropdown and button
     [:div.flex.items-center.justify-between.my-4
       ;; left side: dropdown 
-      [:div.self-start
-      [:select
-        {:class "select select-bordered select-xs opacity-70 subtle-select"
-        :value @project-name*
-        :on-change #(reset! project-name* (.. % -target -value))}
-        ;; Default option
-        [:option {:value (default-project-name)}
-        (default-project-name)]
-        ;; Existing projects
-        (for [{:keys [id name]} @projects*]
-          ^{:key id}
-          [:option {:value name} name])]]
+      [select-project-dropdown selected-project-id* projects*]
 
       ;; right side: button
       [:div
       [:button.btn.btn-primary
         {:type "submit"}
-        "Create"]]]])))
+       "Create"]]]])
+
+(defn create-update-fn [desc* selected-project-id* projects*]
+  (fn [e]
+    (.preventDefault e)
+    (when-not (seq @desc*)
+      (js/alert "Please enter some text for your update"))
+    (go
+      (let [result (<! (http/post "/createUpdate"
+                                  {:form-params {:project-id @selected-project-id*
+                                                 :update-contents @desc*}}))]
+          (if (= (:status result) 200)
+            (.reload js/location)
+            (js/alert "failed to update"))))))
+
+
+(defn existing-projects-view [desc* selected-project-id* projects*]
+  [:form.w-full.px-16
+   {:on-submit (create-update-fn desc* selected-project-id* projects*)}
+   [:p.text-sm "post an update on an existing project"]
+   [er/text-field {:placeholder "Write a project update"
+                   :class "h-12 !max-w-none"} desc*]
+   [:div.flex.items-center.justify-between.my-4
+    [select-project-dropdown selected-project-id* projects*]
+    [:div
+      [:button.btn.btn-primary
+        {:type "submit"}
+       "Post"]]
+   ]]
+  )
+
+(defn update-project []
+  (let [desc*         (r/atom "")
+        selected-project-id* (r/atom -1)
+        projects*     (r/atom [])]
+
+    (get-users-projects projects*)
+    (def mm [selected-project-id* projects*])
+    (fn []
+      (if (= @selected-project-id* -1)
+        [create-project-view desc* selected-project-id* projects*]
+        [existing-projects-view desc* selected-project-id* projects*]))))
 
 
 (defn featured []
@@ -119,3 +160,6 @@
     [update-project]
     [featured]
     [feed]]])
+
+
+
