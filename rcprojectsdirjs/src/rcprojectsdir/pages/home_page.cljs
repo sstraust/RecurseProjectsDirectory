@@ -38,20 +38,23 @@
 
 (defn create-project-fn [project-name* desc*]
   (fn [e]
-        (.preventDefault e)
+    (.preventDefault e)
+    ;; (js/alert "hi")
+    (.log js/console "hi2")
         (when-not (seq @desc*)
           (js/alert "Please enter a description for your project"))
         (when (seq @desc*)
           (go
             (let [result (<! (http/post "/newProject"
                                         {:form-params {:project-name        @project-name*
-                                                      :project-description @desc*}}))
-                status (:status result)
-                body   (some-> (:body result) (js/JSON.parse) (js->clj :keywordize-keys true))]
+                                                       :project-description @desc*}}))
+                  status (:status result)
+                  body   (some-> (:body result)
+                                 (js->clj :keywordize-keys true))]
               (if (= status 200)
-                (do 
-                  (reset! desc* "")
-                  (js/alert "Project created!"))
+                (do
+                  (set! (.-href (.-location js/window))
+                                   (str "/reviewProjectPage?project=" (:project-id (:body result)))))
                 (do
                   (.error js/console "Failed to create project" (clj->js result))
                   (js/alert (or (:error body) "Something went wrong creating your project."))))))))
@@ -99,6 +102,7 @@
       [:button.btn.btn-primary
         {:type "submit"}
         "Create"]]]])))
+
 
 (defn featured []
   [:div.h-64.w-full.bg-base-300.my-2

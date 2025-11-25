@@ -172,35 +172,42 @@
 
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id name description]
-  (jdbc/execute!
-    db-spec
-    ["INSERT INTO projects (name, description, author)
-      VALUES (?, ?, ?)"
-     name description user-id]))
+  [user-id project-name description]
+  (jdbc/insert!
+   db-spec
+   :projects
+   {:name project-name
+    :description description
+    :author user-id}))
 
 (defn create-project [request]
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
-        ;; TODO: replace with logged-in user id
         user-id             (:db_id (:session request))]
     (try
-      (when (and (string? project-description)
+      (if (and (string? project-description)
                 (string? project-name)
                 (not (clojure.string/blank? project-name)))
-        (create-project! user-id project-name project-description))
-      {:status  200
-      :headers {"Content-Type" "application/json"}
-      :body    (json/write-str {:ok true})}
-      
+        (if-let [result (first (create-project! user-id project-name project-description))]
+          {:status  200
+           :headers {"Content-Type" "application/json"}
+           :body    (json/write-str {:ok true
+                                     :project-id (:id result)})}
+          (do (println "failed to create project")
+          {:status  500
+           :headers  {"Content-Type" "text/plain"}
+           :body    "failed to create project"}))
+        (do
+          (println "invalid project name")
+          {:status  500
+        :headers  {"Content-Type" "text/plain"}
+         :body    "invalid project name"}))
       (catch Exception e
         (println e)
         {:status  500
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
-
-
-
+          
 ;; use keyword destructuring to access params
 (defn get-project-details [{{:keys [project-id]} :params}]
   (let [query-result (first

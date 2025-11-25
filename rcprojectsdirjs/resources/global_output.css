@@ -3141,6 +3141,10 @@ details.collapse summary::-webkit-details-marker {
   margin-bottom: 1.5rem;
 }
 
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
 .ml-8 {
   margin-left: 2rem;
 }
@@ -3201,8 +3205,8 @@ details.collapse summary::-webkit-details-marker {
   height: 16rem;
 }
 
-.h-9 {
-  height: 2.25rem;
+.h-8 {
+  height: 2rem;
 }
 
 .h-full {
@@ -3304,6 +3308,16 @@ details.collapse summary::-webkit-details-marker {
 .text-2xl {
   font-size: 1.5rem;
   line-height: 2rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
 }
 
 .text-xl {
