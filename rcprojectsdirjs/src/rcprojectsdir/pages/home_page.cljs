@@ -43,7 +43,7 @@
   (fn [e]
     (.preventDefault e)
     (when-not (seq @desc*)
-          (js/alert "Please enter a description for your project"))
+      (js/alert "Please enter a description for your project"))
         (when (seq @desc*)
           (go
             (let [result (<! (http/post "/newProject"
@@ -143,6 +143,7 @@
       (if (= @selected-project-id* -1)
         [create-project-view desc* selected-project-id* projects*]
         [existing-projects-view desc* selected-project-id* projects*]))))
+
 
 
 (defn featured []
