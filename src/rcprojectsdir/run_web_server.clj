@@ -1,10 +1,24 @@
 (ns rcprojectsdir.run-web-server
-  (:require [compojure.core :refer [defroutes GET POST]]
-            [easyreagentserver.core :as er-server]
-            [hiccup.page :refer [include-js include-css html5]]
-            [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
-            [environ.core :refer [env]]))
+  (:require
+   [clojure.data.json :as json]
+   [clojure.java.jdbc :as jdbc]
+   [compojure.core :refer [defroutes GET POST]]
+   [easyreagentserver.core :as er-server]
+   [ring.util.response :as response]
+   [environ.core :refer [env]]
+   [hiccup.page :refer [html5 include-css include-js]]
+   [libpython-clj2.python :as py]
+   [libpython-clj2.require :refer [require-python]]))
+
+(require-python '[requests_oauthlib :refer [OAuth2Session]])
+(require-python 'os)
+(require-python '[json :as py-json])
+
+
+(def recurse-auth-url "https://www.recurse.com/oauth/authorize")
+(def recurse-token-url "https://www.recurse.com/oauth/token")
+(def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
+
 
 (def db-spec
   {:dbtype "postgresql"
@@ -48,6 +62,12 @@
         FOREIGN KEY (author) REFERENCES users(id)
       );"]))
 
+(defn migrate-v2 []
+  (jdbc/execute!
+   db-spec 
+   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
+
+
 
 #_(jdbc/execute!
  db-spec
@@ -59,14 +79,60 @@
 
 #_(jdbc/execute!
    db-spec
-   ["INSERT INTO users (id, name) VALUES (?, ?)" 11 "test"])
+   ["INSERT INTO users (id, name) VALUES (?, ?)" 2 "test"])
+
+#_(jdbc/execute!
+   db-spec
+   ["DROP TABLE  users CASCADE"])
+;; (create-user-if-not-exists {:name "test" :id 123})
 
 
 
+(defn redirect-to-oauth []
+  (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+    (response/redirect (first (py/py. oauth-obj authorization_url
+                                recurse-auth-url)))))
 
+(defn create-user-if-not-exists [{:keys [name id] :as recurse-info}]
+  (first (jdbc/query
+   db-spec
+   ["INSERT INTO users (name, recurse_id)
+     VALUES (?, ?)
+     ON CONFLICT (recurse_id)
+     DO UPDATE SET recurse_id = EXCLUDED.recurse_id
+     RETURNING *"
+    name
+    id])))
+                     
+  
 
-               
-
+(defn handle-redirect-response [params]
+  (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
+                          (get-in params [:headers "host"]) "/" (get params :uri) "?" (get params :query-string))
+        authorizer (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+    (py/py. authorizer fetch_token
+            recurse-token-url
+            :client_secret (:recurse-client-secret env)
+            :authorization_response response-url)
+    (let [user-info (py/py. authorizer get "https://www.recurse.com/api/v1/profiles/me")
+          parsed-response (medley.core/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
+      (if (not (and (:name parsed-response)
+                    (:id parsed-response)))
+        {:status 500
+         :headers {"Content-Type" "text/plain"}
+         :body "Failed to Fetch Project"}
+        (do
+          (let [db-result (create-user-if-not-exists parsed-response)]
+            (if (not db-result)
+              {:status 500
+               :headers {"Content-Type" "text/plain"}
+               :body "Failed to fetch user in database"}
+              (assoc
+               (response/redirect "/")
+               :session
+               {:name (:name parsed-response)
+                :db_id (:id db-result)
+                :recurse_id (:id parsed-response)}))))))))
 
 
 
@@ -94,30 +160,54 @@
    :headers {"Content-Type" "text/html"}
    :body (loading-page)})
 
+(defn get-users-projects
+  "HTTP handler: return projects for current user-id (hardcoded)"
+  [request]
+  (let [user-id  (:db_id (:session request))
+        projects (jdbc/query db-spec
+                             ["SELECT * FROM projects WHERE author = ?" user-id])]
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/write-str {:projects projects})}))
+
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id name description]
+  [user-id project-name description]
   (jdbc/insert!
    db-spec
    :projects
-   {:name name
+   {:name project-name
     :description description
     :author user-id}))
 
-(defn create-project [params]
-  (let [project-description (get-in params [:params :project-description])
-        ;; TODO: replace with logged-in user id
-        user-id 1
-        name    (str "New project" (rand-int 10000))]
-    (when (string? project-description)
-      (when-let [result (first (create-project! user-id name project-description))]
-        (def ww result)
-        {:status  200
-         :headers {"Content-Type" "application/json"}
-         :body    (json/write-str {:ok true
-                                   :project-id (:id result)})}))))
-
-
+(defn create-project [request]
+  (let [project-description (get-in request [:params :project-description])
+        project-name        (get-in request [:params :project-name])
+        user-id             (:db_id (:session request))]
+    (try
+      (if (and (string? project-description)
+                (string? project-name)
+                (not (clojure.string/blank? project-name)))
+        (if-let [result (first (create-project! user-id project-name project-description))]
+          {:status  200
+           :headers {"Content-Type" "application/json"}
+           :body    (json/write-str {:ok true
+                                     :project-id (:id result)})}
+          (do (println "failed to create project")
+          {:status  500
+           :headers  {"Content-Type" "text/plain"}
+           :body    "failed to create project"}))
+        (do
+          (println "invalid project name")
+          {:status  500
+        :headers  {"Content-Type" "text/plain"}
+         :body    "invalid project name"}))
+      (catch Exception e
+        (println e)
+        {:status  500
+        :headers  {"Content-Type" "text/plain"}
+         :body    "Failed to create project"}))))
+          
 ;; use keyword destructuring to access params
 (defn get-project-details [{{:keys [project-id]} :params}]
   (let [query-result (first
@@ -158,30 +248,55 @@
        :body "Failed to Edit Project"})))
 
 
+(defn get-curr-user-info [params]
+  {:status 200
+   :headers {"Content-Type" "application/json"}
+   :body (json/write-str (select-keys (:session params) [:id :name]))})
 
 
 
+(defn login-redirect [handler]
+  (fn [request]
+    (if (get-in request [:session :recurse_id])
+      (handler request)
+      (response/redirect "/redirect"))))
 
-(defroutes routes
+(defroutes public-routes
+  (GET "/redirect" params (redirect-to-oauth))
+  (GET "/handleRedirectResponse" params (handle-redirect-response params)))
+
+
+(defroutes private-routes
   (GET "/" params (get-main-page params))
+  (GET "/currUserInfo" params (get-curr-user-info params))
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
+  (GET "/getUsersProjects" params (get-users-projects params))  
   (POST "/newProject" params (create-project params)))
+  
+
+
+(def all-routes
+  (compojure.core/routes
+   public-routes
+   (compojure.core/wrap-routes
+    private-routes
+    login-redirect)))
+  
 
 (defn run-web-server [input-mode]
   (when input-mode (reset! er-server/MODE input-mode))
+  (when (= input-mode :dev)
+    (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
+  (migrate-v2)
   (er-server/run-web-server
-   "rcprojectsdirjs" routes
+   "rcprojectsdirjs" all-routes
    {:port 8001
     :join? false
     :headerBufferSize 1048576}))
 
 
 ;; (run-web-server :dev)
-
-
-;; (create-project {:params {:project-description "hello"}})
-
