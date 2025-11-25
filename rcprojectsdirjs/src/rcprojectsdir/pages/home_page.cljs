@@ -138,7 +138,6 @@
         projects*     (r/atom [])]
 
     (get-users-projects projects*)
-    (def mm [selected-project-id* projects*])
     (fn []
       (if (= @selected-project-id* -1)
         [create-project-view desc* selected-project-id* projects*]

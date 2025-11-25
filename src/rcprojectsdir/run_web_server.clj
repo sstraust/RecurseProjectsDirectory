@@ -265,7 +265,6 @@
 
 
 (defn create-update [{{:keys [project-id update-contents]} :params :as params}]
-  (def zz params)
   (if-not (= (:status (get-project-details params)) 200)
     (get-project-details params)
     (if-not (first (jdbc/query db-spec ["SELECT 1 FROM projects WHERE author = ? AND id = ? LIMIT 1"
