@@ -49,7 +49,9 @@
             (let [result (<! (http/post "/newProject"
                                         {:form-params {:project-name        (or
                                                                              (some
-                                                                              (fn [x] (:name (= (:id x) @selected-project-id*))) @projects*)
+                                                                              (fn [x]
+                                                                                (when (= (:id x) @selected-project-id*)
+                                                                                  (:name x))) @projects*)
                                                                              (default-project-name))
                                                        :project-description @desc*}}))
                   status (:status result)
