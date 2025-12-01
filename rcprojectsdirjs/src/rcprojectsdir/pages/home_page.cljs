@@ -68,22 +68,36 @@
                   (js/alert (or (:error body) "Something went wrong creating your project.")))))))))
 
 
+
+(defn dropdown-list-item [selected-item item-id item-title]
+  [:li
+   [:a {:on-click #(reset! selected-item item-id)}
+       item-title]])
+
+
+
+(defn get-project-name-from-id [selected-project-id projects*]
+  (or
+   (some
+    (fn [x]
+      (when (= (:id x) selected-project-id)
+        (:name x))) @projects*)
+   (default-project-name)))
+
 (defn select-project-dropdown [selected-project-id* projects*]
-  [:h-box.items-center.gap-4
-   [:div.self-start
-      [:select
-        {:class "select select-bordered select-xs opacity-70 subtle-select"
-        :value @selected-project-id*
-        :on-change #(reset! selected-project-id* (js/parseInt (.. % -target -value)))}
-        (for [{:keys [id name]} @projects*]
-          ^{:key id}
-          [:option {:value id} name])]]
-   ;; TODO change to soft button when upgrade to newest version of daisyui
-   (when (not (= @selected-project-id* -1))
-   [:button.btn.btn-outline.btn-primary.btn-xs
-    {:type "button"
-     :on-click (fn [] (reset! selected-project-id* -1))}
-    "+ New Project"])])
+  [:div.dropdown.dropdown-bottom.rounded-lg
+   {:style {:border-style "solid"
+            :border-width 1
+            :border-color "#aaaaaa"
+            :min-width "20rem"}}
+   [:label.btn.btn-ghost.rounded-btn.normal-case.flex.flex-row.justify-between
+    {:tabIndex "0"
+     :role "button"}
+    (get-project-name-from-id @selected-project-id* projects*)
+    [:img {:src "resources/svgs/dropdown.svg"}]]
+    [:ul.menu.dropdown-content.bg-base-200.rounded-box.mt-4.w-52.p-2.shadow-sm
+     (for [{:keys [id name]} @projects*]
+       [dropdown-list-item selected-project-id* id name])]])
 
 
 (defn create-project-view [desc* selected-project-id* projects*]
@@ -128,15 +142,18 @@
 (defn existing-projects-view [desc* selected-project-id* projects*]
   [:form.w-full.px-16
    {:on-submit (create-update-fn desc* selected-project-id* projects*)}
-   [:p.text-sm "post an update on an existing project"]
+   [:p.font-bold
+    {:style {:font-size "1.875rem"}}
+    "Share what you're working on:"]
+   [select-project-dropdown selected-project-id* projects*]
    [er/text-field {:placeholder "Write a project update"
                    :class "h-12 !max-w-none"} desc*]
    [:div.flex.items-center.justify-between.my-4
-    [select-project-dropdown selected-project-id* projects*]
+    
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
-       "Post"]]
+       "Update"]]
    ]]
   )
 
@@ -147,7 +164,7 @@
 
     (get-users-projects projects* selected-project-id*)
     (fn []
-      [:div.mt-8
+      [:v-box.items-start.w-full
       (if (= @selected-project-id* -1)
         [create-project-view desc* selected-project-id* projects*]
         [existing-projects-view desc* selected-project-id* projects*])])))
@@ -164,8 +181,9 @@
 
 (defn home-page []
   [:v-box.w-screen.w-screen.items-center.h-screen
-   [:v-box.w-screen.h-full.max-w-5xl
-    [navbar/full-navbar]
+   [navbar/full-navbar]
+   [:v-box.w-screen.h-full
+    {:style {:width "63rem"}}
     [update-project]
     [featured]
     [updates-feed/updates-feed]
