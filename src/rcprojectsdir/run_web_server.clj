@@ -68,6 +68,22 @@
    ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
 
 
+(defn migrate-v3 []
+  (jdbc/execute!
+   db-spec
+   ["CREATE TABLE IF NOT EXISTS updates (
+       id SERIAL PRIMARY KEY,
+       update_text TEXT,
+       project_id INTEGER NOT NULL,
+       author INTEGER NOT NULL,
+       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+       FOREIGN KEY (author) REFERENCES users(id),
+       FOREIGN KEY (project_id) REFERENCES projects(id)
+     );"]))
+
+       
+
+
 
 #_(jdbc/execute!
  db-spec
@@ -248,6 +264,32 @@
        :body "Failed to Edit Project"})))
 
 
+(defn create-update [{{:keys [project-id update-contents]} :params :as params}]
+  (if-not (= (:status (get-project-details params)) 200)
+    (get-project-details params)
+    (if-not (first (jdbc/query db-spec ["SELECT 1 FROM projects WHERE author = ? AND id = ? LIMIT 1"
+                               (:db_id (:session params)) (Integer/parseInt project-id)]))
+      {:status 500
+       :headers {"Content-Type" "text/plain"}
+       :body "Failed to find this project owned by user"}
+      (if-let [db-result (jdbc/insert!
+                       db-spec
+                       :updates
+                       {:update_text (str update-contents)
+                        :project_id (Integer/parseInt project-id)
+                        :author (:db_id (:session params))})]
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body    (json/write-str {:ok true
+                                   :update-id (:id db-result)})}
+        {:status 500
+         :headers {"Content-Type" "text/plain"}
+         :body "Failed to insert"}))))
+
+       
+
+
+
 (defn get-curr-user-info [params]
   {:status 200
    :headers {"Content-Type" "application/json"}
@@ -274,7 +316,8 @@
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
   (GET "/getUsersProjects" params (get-users-projects params))  
-  (POST "/newProject" params (create-project params)))
+  (POST "/newProject" params (create-project params))
+  (POST "/createUpdate" params (create-update params)))
   
 
 
@@ -292,6 +335,7 @@
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
   (migrate-v2)
+  (migrate-v3)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
