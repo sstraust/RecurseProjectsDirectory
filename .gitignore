@@ -33,3 +33,5 @@ db_dump*
 database_dump*
 node_modules
 .env
+**/.DS_Store
+.DS_Store
