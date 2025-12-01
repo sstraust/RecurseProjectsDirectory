@@ -5,8 +5,6 @@
    [rcprojectsdir.pages.home-page :as home-page]
    [reagent.core :as r]
    [rcprojectsdir.pages.review-project-page :as review-project-page]
-   [rcprojectsdir.design-components.main-homepage]
-   [rcprojectsdir.design-components.create-project-intro-box]
    [reagent.dom :as rdom]))
 
 
@@ -23,12 +21,6 @@
   
 (load-page)
 
-
-
-
-
-;; (rdom/render [rcprojectsdir.design-components.main-homepage/test-ui]
-;;              (js/document.getElementById "main-app"))
 
 
 (def curr-css (atom nil))
