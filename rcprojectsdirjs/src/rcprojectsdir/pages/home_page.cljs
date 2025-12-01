@@ -70,11 +70,11 @@
 
 
 (defn dropdown-list-item [selected-item item-id item-title]
-  [:li
-   [:a {:on-click #(reset! selected-item item-id)}
+  [:li {:on-click #(do
+                     (js/alert (str item-id))
+                     (reset! selected-item item-id))}
+   [:a 
        item-title]])
-
-
 
 (defn get-project-name-from-id [selected-project-id projects*]
   (or
@@ -85,6 +85,7 @@
    (default-project-name)))
 
 (defn select-project-dropdown [selected-project-id* projects*]
+  (def bb selected-project-id*)
   [:div.dropdown.dropdown-bottom.rounded-lg
    {:style {:border-style "solid"
             :border-width 1
