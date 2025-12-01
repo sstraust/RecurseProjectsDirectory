@@ -3,7 +3,10 @@
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
    [rcprojectsdir.pages.home-page :as home-page]
+   [reagent.core :as r]
    [rcprojectsdir.pages.review-project-page :as review-project-page]
+   [rcprojectsdir.design-components.main-homepage]
+   [rcprojectsdir.design-components.create-project-intro-box]
    [reagent.dom :as rdom]))
 
 
@@ -15,11 +18,17 @@
 (defn ^:export load-page []
   (case (js* "window.location.pathname")
     "/" (load-main-page)
-    "/reviewProjectPage" (review-project-page/load-review-project-page)
-    ))
+    "/reviewProjectPage" (review-project-page/load-review-project-page)))
 
   
 (load-page)
+
+
+
+
+
+;; (rdom/render [rcprojectsdir.design-components.main-homepage/test-ui]
+;;              (js/document.getElementById "main-app"))
 
 
 (def curr-css (atom nil))

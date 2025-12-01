@@ -1,10 +1,12 @@
 (ns rcprojectsdir.pages.home-page
-  (:require [reagent.core :as r]
-            [cljs-http.client :as http]
-            [easyreagent.components]
-            [rcprojectsdir.common-components.navbar :as navbar]
-            [easyreagent.components :as er]
-            [cljs.core.async :refer [<!]])
+  (:require
+   [cljs-http.client :as http]
+   [cljs.core.async :refer [<!]]
+   [easyreagent.components]
+   [easyreagent.components :as er]
+   [rcprojectsdir.common-components.navbar :as navbar]
+   [rcprojectsdir.feed.updates-feed :as updates-feed]
+   [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (def counter (r/atom 0))
@@ -25,7 +27,7 @@
 (defn default-project-name []
   (str "NewProject_" (compact-date) "#" (rand-name-str)))
 
-(defn get-users-projects [projects*]
+(defn get-users-projects [projects* selected-project-id*]
   (go
       (let [resp   (<! (http/get "/getUsersProjects"))
             body   (:body resp)
@@ -36,8 +38,8 @@
                     :else {})]
           ;;  body   (:body resp)]
         (when-let [projects (:projects parsed)]
-          (reset! projects* projects))))
-)
+          (reset! projects* projects)
+          (reset! selected-project-id* (:id (first projects)))))))
 
 (defn create-project-fn [selected-project-id* projects* desc*]
   (fn [e]
@@ -67,24 +69,28 @@
 
 
 (defn select-project-dropdown [selected-project-id* projects*]
-  [:div.self-start
+  [:h-box.items-center.gap-4
+   [:div.self-start
       [:select
         {:class "select select-bordered select-xs opacity-70 subtle-select"
         :value @selected-project-id*
         :on-change #(reset! selected-project-id* (js/parseInt (.. % -target -value)))}
-        ;; Default option
-        [:option {:value -1}
-        (default-project-name)]
-        ;; Existing projects
         (for [{:keys [id name]} @projects*]
           ^{:key id}
-          [:option {:value id} name])]])
+          [:option {:value id} name])]]
+   ;; TODO change to soft button when upgrade to newest version of daisyui
+   (when (not (= @selected-project-id* -1))
+   [:button.btn.btn-outline.btn-primary.btn-xs
+    {:type "button"
+     :on-click (fn [] (reset! selected-project-id* -1))}
+    "+ New Project"])])
 
 
 (defn create-project-view [desc* selected-project-id* projects*]
   [:form.w-full.px-16
      {:on-submit
       (create-project-fn selected-project-id* projects* desc*)}
+    [:p.text-xs.mb-2.text-xl "Add a Project"]
 
     ;; Description input 
     [:div
@@ -137,13 +143,14 @@
 (defn update-project []
   (let [desc*         (r/atom "")
         selected-project-id* (r/atom -1)
-        projects*     (r/atom [])]
+        projects*     (r/atom nil)]
 
-    (get-users-projects projects*)
+    (get-users-projects projects* selected-project-id*)
     (fn []
+      [:div.mt-8
       (if (= @selected-project-id* -1)
         [create-project-view desc* selected-project-id* projects*]
-        [existing-projects-view desc* selected-project-id* projects*]))))
+        [existing-projects-view desc* selected-project-id* projects*])])))
 
 
 
@@ -161,6 +168,7 @@
     [navbar/full-navbar]
     [update-project]
     [featured]
+    [updates-feed/updates-feed]
     [feed]]])
 
 
