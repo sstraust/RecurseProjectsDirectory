@@ -70,10 +70,8 @@
 
 
 (defn dropdown-list-item [selected-item item-id item-title]
-  [:li {:on-click #(do
-                     (js/alert (str item-id))
-                     (reset! selected-item item-id))}
-   [:a 
+  [:li
+   [:a {:on-mouse-down #(reset! selected-item item-id)}
        item-title]])
 
 (defn get-project-name-from-id [selected-project-id projects*]
@@ -85,13 +83,13 @@
    (default-project-name)))
 
 (defn select-project-dropdown [selected-project-id* projects*]
-  (def bb selected-project-id*)
-  [:div.dropdown.dropdown-bottom.rounded-lg
+  [:div.dropdown.dropdown-bottom.rounded-lg.mb-2
    {:style {:border-style "solid"
             :border-width 1
             :border-color "#aaaaaa"
-            :min-width "20rem"}}
-   [:label.btn.btn-ghost.rounded-btn.normal-case.flex.flex-row.justify-between
+            :width "19.65375rem"
+            :height "3.3125rem"}}
+   [:label.btn.btn-ghost.rounded-btn.normal-case.flex.flex-row.justify-between.font-normal.text-lg
     {:tabIndex "0"
      :role "button"}
     (get-project-name-from-id @selected-project-id* projects*)
@@ -141,16 +139,18 @@
 
 
 (defn existing-projects-view [desc* selected-project-id* projects*]
-  [:form.w-full.px-16
+  [:form.w-full
    {:on-submit (create-update-fn desc* selected-project-id* projects*)}
    [:p.font-bold
     {:style {:font-size "1.875rem"}}
     "Share what you're working on:"]
    [select-project-dropdown selected-project-id* projects*]
-   [er/text-field {:placeholder "Write a project update"
-                   :class "h-12 !max-w-none"} desc*]
-   [:div.flex.items-center.justify-between.my-4
-    
+   [er/text-area {:placeholder "Write a project update"
+                  :style {:height "5.625rem"}
+                  :class "!max-w-none"} desc*]
+   [:h-box.flex.items-start.justify-between
+    {:style {:margin-top 2}}
+    [:div "+ Additional Info"]
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
@@ -173,7 +173,8 @@
 
 
 (defn featured []
-  [:div.h-64.w-full.bg-base-300.my-2
+  [:div.h-96.w-full.bg-base-300
+   {:style {:margin-top "1.875rem"}}
    "Featured"])
 
 (defn feed []
@@ -188,7 +189,8 @@
     [update-project]
     [featured]
     [updates-feed/updates-feed]
-    [feed]]])
+    ;; [feed]
+    ]])
 
 
 

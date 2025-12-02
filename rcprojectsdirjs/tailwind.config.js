@@ -9,6 +9,8 @@ module.exports = {
             'sans': ['Raleway', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         },
         colors: {
+	    "badge-primary": "#86CEFF",
+	    "link-color": "#0000EE",
             primary: '#000000',
         },
         extend: {},
@@ -17,7 +19,7 @@ module.exports = {
         themes: [
             {
                 mytheme: {
-                    "primary": "#975DF8",
+                    "primary": "#8375FF",
                     "secondary": "#F000B8",
                     "accent": "#37CDBE",
                     "neutral": "#3D4451",

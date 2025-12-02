@@ -281,7 +281,7 @@
   (er-server/json-response
    {:updates-list (jdbc/query
               db-spec
-              ["SELECT update_text, a.name AS user_name, b.name AS project_name
+              ["SELECT update_text, a.name AS author_name, b.name AS project_name
      FROM project_updates u
      JOIN users a
      ON u.author = a.id
@@ -337,7 +337,6 @@
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
   (migrate-v2)
-  (migrate-v3)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
