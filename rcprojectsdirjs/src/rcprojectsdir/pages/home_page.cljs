@@ -25,7 +25,7 @@
 (defn default-project-name []
   (str "NewProject_" (compact-date) "#" (rand-name-str)))
 
-(defn get-users-projects [projects*]
+(defn get-users-projects [users-projects*]
   (go
       (let [resp   (<! (http/get "/getUsersProjects"))
             body   (:body resp)
@@ -35,11 +35,24 @@
                     (js->clj (js/JSON.parse body) :keywordize-keys true)
                     :else {})]
           ;;  body   (:body resp)]
-        (when-let [projects (:projects parsed)]
-          (reset! projects* projects))))
+        (when-let [users-projects (:users-projects parsed)]
+          (reset! users-projects* users-projects))))
 )
 
-(defn create-project-fn [selected-project-id* projects* desc*]
+(defn get-all-projects [all-projects*]
+  (go
+      (let [resp   (<! (http/get "/getAllProjects"))
+            body   (:body resp)
+            parsed (cond
+                    (map? body) body
+                    (string? body)
+                    (js->clj (js/JSON.parse body) :keywordize-keys true)
+                    :else {})]
+        (when-let [all-projects (:all-projects parsed)]
+          (reset! all-projects* all-projects))))
+)
+
+(defn create-project-fn [selected-project-id* users-projects* desc*]
   (fn [e]
     (.preventDefault e)
     (when-not (seq @desc*)
@@ -51,7 +64,7 @@
                                                                              (some
                                                                               (fn [x]
                                                                                 (when (= (:id x) @selected-project-id*)
-                                                                                  (:name x))) @projects*)
+                                                                                  (:name x))) @users-projects*)
                                                                              (default-project-name))
                                                        :project-description @desc*}}))
                   status (:status result)
@@ -66,7 +79,7 @@
                   (js/alert (or (:error body) "Something went wrong creating your project.")))))))))
 
 
-(defn select-project-dropdown [selected-project-id* projects*]
+(defn select-project-dropdown [selected-project-id* users-projects*]
   [:div.self-start
       [:select
         {:class "select select-bordered select-xs opacity-70 subtle-select"
@@ -76,15 +89,15 @@
         [:option {:value -1}
         (default-project-name)]
         ;; Existing projects
-        (for [{:keys [id name]} @projects*]
+        (for [{:keys [id name]} @users-projects*]
           ^{:key id}
           [:option {:value id} name])]])
 
 
-(defn create-project-view [desc* selected-project-id* projects*]
+(defn create-project-view [desc* selected-project-id* users-projects*]
   [:form.w-full.px-16
      {:on-submit
-      (create-project-fn selected-project-id* projects* desc*)}
+      (create-project-fn selected-project-id* users-projects* desc*)}
 
     ;; Description input 
     [:div
@@ -97,7 +110,7 @@
     ;; Row with dropdown and button
     [:div.flex.items-center.justify-between.my-4
       ;; left side: dropdown 
-      [select-project-dropdown selected-project-id* projects*]
+      [select-project-dropdown selected-project-id* users-projects*]
 
       ;; right side: button
       [:div
@@ -105,7 +118,8 @@
         {:type "submit"}
        "Create"]]]])
 
-(defn create-update-fn [desc* selected-project-id* projects*]
+(defn create-update-fn [desc* selected-project-id*]
+;; (defn create-update-fn [desc* selected-project-id* users-projects*]
   (fn [e]
     (.preventDefault e)
     (when-not (seq @desc*)
@@ -119,14 +133,15 @@
             (js/alert "failed to update"))))))
 
 
-(defn existing-projects-view [desc* selected-project-id* projects*]
+(defn existing-projects-view [desc* selected-project-id* users-projects*]
   [:form.w-full.px-16
-   {:on-submit (create-update-fn desc* selected-project-id* projects*)}
+   {:on-submit (create-update-fn desc* selected-project-id*)}
+  ;;  {:on-submit (create-update-fn desc* selected-project-id* users-projects*)}
    [:p.text-sm "post an update on an existing project"]
    [er/text-field {:placeholder "Write a project update"
                    :class "h-12 !max-w-none"} desc*]
    [:div.flex.items-center.justify-between.my-4
-    [select-project-dropdown selected-project-id* projects*]
+    [select-project-dropdown selected-project-id* users-projects*]
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
@@ -137,13 +152,13 @@
 (defn update-project []
   (let [desc*         (r/atom "")
         selected-project-id* (r/atom -1)
-        projects*     (r/atom [])]
+        users-projects*     (r/atom [])]
 
-    (get-users-projects projects*)
+    (get-users-projects users-projects*)
     (fn []
       (if (= @selected-project-id* -1)
-        [create-project-view desc* selected-project-id* projects*]
-        [existing-projects-view desc* selected-project-id* projects*]))))
+        [create-project-view desc* selected-project-id* users-projects*]
+        [existing-projects-view desc* selected-project-id* users-projects*]))))
 
 
 
@@ -151,9 +166,33 @@
   [:div.h-64.w-full.bg-base-300.my-2
    "Featured"])
 
+(defn project-card [{:keys [id name description author created_at]}]
+  [:div.card.bg-base-100.shadow-md.mb-4
+   [:div.card-body
+    [:h3.card-title name]
+    [:p.text-sm.text-gray-500
+     (str "By user " author " · " created_at)]
+    (when (seq description)
+      [:p.mt-2 description])]])
+
 (defn feed []
-  [:div.flex-grow.bg-base-300.my-4
-   "Feed"])
+  (let [all-projects* (r/atom [])]
+    (get-all-projects all-projects*)
+
+    (fn []
+      (let [projects @all-projects*]
+        [:div.flex-grow.bg-base-300.my-4.p-4
+         [:h2.text-lg.font-bold.mb-2 "Feed"]
+
+         (cond
+           (empty? projects)
+           [:p.text-sm "No projects yet or still loading..."]
+
+           :else
+           [:div.space-y-4
+            (for [{:keys [id] :as project} projects]
+              ^{:key id}
+              [project-card project])])]))))
 
 (defn home-page []
   [:v-box.w-screen.w-screen.items-center.h-screen
