@@ -95,6 +95,10 @@ CREATE UNIQUE INDEX idx_project_search_id ON project_search (id);
 REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 "]))
 
+(defn migrate-v4 []
+  (jdbc/execute!
+   db-spec
+   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT FALSE"]))
 
    
 
@@ -167,6 +171,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
                :session
                {:name (:name parsed-response)
                 :db_id (:id db-result)
+                :is_new_user (:is_new_user db-result)
                 :recurse_id (:id parsed-response)}))))))))
 
 
@@ -179,7 +184,9 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
    (str "<script>mode=" (json/write-str @er-server/MODE) "</script>")
    (include-css (str "/resources/global_output.css?v=" (rand-int 100000)))])
 
-(defn loading-page []
+
+;; now I need to pass the user session parameter to landing-page
+(defn loading-page [params]
   (html5
    (head)
    [:body {:class "body-container"}
@@ -189,6 +196,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 <link href=\"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap\" rel=\"stylesheet\">")
     (include-js "/resources/reload_css.js")
     (include-js "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js")
+    (str "<script>is_new_user=" (:is_new_user (:session params)) "</script>")
     (if (= @er-server/MODE :dev)
       (include-js  (str "/out/main.js?v=" (rand-int 100000)))
       (include-js "/prod_js/main.js"))]))
@@ -196,7 +204,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 (defn get-main-page [params]
   {:status 200
    :headers {"Content-Type" "text/html"}
-   :body (loading-page)})
+   :body (loading-page params)})
 
 (defn get-users-projects
   "HTTP handler: return projects for current user-id"
@@ -350,7 +358,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 ;; TODO add malli validation so we can ensure that this matches the same
 ;; schema as getallprojects
 (defn search-projects [{{:keys [search-str]} :params}]
-  (def zz search-str)
   (er-server/json-response
    {:all-projects 
    (let [search-query (str-to-search-query search-str)]
@@ -383,6 +390,8 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 
 
 (defroutes private-routes
+  ;; now I think this should return is_new_user as part of the js response
+  ;; so that it happens clean on first load with no flashbang
   (GET "/" params (get-main-page params))
   (GET "/currUserInfo" params (get-curr-user-info params))
   ;; use frontend routing for requests
@@ -413,6 +422,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (migrate-v1)
   (migrate-v2)
   (migrate-v3)
+  (migrate-v4)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
