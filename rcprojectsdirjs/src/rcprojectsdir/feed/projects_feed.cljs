@@ -17,7 +17,7 @@
                     (js->clj (js/JSON.parse body) :keywordize-keys true)
                     :else {})]
         (when-let [all-projects (:all-projects parsed)]
-          (reset! all-projects* all-projects)))))
+          (reset! all-projects* (sort-by :created_at > all-projects))))))
 
 (defn get-searched-projects [search-str all-projects*]
   (go
@@ -30,11 +30,11 @@
                     (js->clj (js/JSON.parse body) :keywordize-keys true)
                     :else {})]
         (when-let [all-projects (:all-projects parsed)]
-          (reset! all-projects* all-projects)))))
+          (reset! all-projects* (sort-by :created_at > all-projects))))))
   
 
 (defn project-card [{:keys [id name description author created_at]}]
-  [:div.card.bg-base-100.shadow-md.mb-4
+  [:div.bg-base-100.shadow-md.mb-4.rounded-xl
    [:div.card-body
     [:h3.card-title name]
     [:p.text-sm.text-gray-500
