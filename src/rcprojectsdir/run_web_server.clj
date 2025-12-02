@@ -2,13 +2,14 @@
   (:require
    [clojure.data.json :as json]
    [clojure.java.jdbc :as jdbc]
+   [clojure.string :as str]
    [compojure.core :refer [defroutes GET POST]]
    [easyreagentserver.core :as er-server]
-   [ring.util.response :as response]
    [environ.core :refer [env]]
    [hiccup.page :refer [html5 include-css include-js]]
    [libpython-clj2.python :as py]
-   [libpython-clj2.require :refer [require-python]]))
+   [libpython-clj2.require :refer [require-python]]
+   [ring.util.response :as response]))
 
 (require-python '[requests_oauthlib :refer [OAuth2Session]])
 (require-python 'os)
@@ -67,6 +68,36 @@
    db-spec 
    ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
 
+(defn migrate-v3 []
+  (jdbc/execute! db-spec
+    ["DROP MATERIALIZED VIEW IF EXISTS project_search CASCADE"])
+  (jdbc/execute!
+   db-spec
+   ["CREATE MATERIALIZED VIEW project_search AS
+SELECT 
+  p.id,
+  p.name,
+  p.description,
+  a.name AS author_name,
+  setweight(to_tsvector('simple', COALESCE(p.name, '')), 'A') ||
+  setweight(to_tsvector('simple', COALESCE(a.name, '')), 'B') ||
+  setweight(to_tsvector('simple', COALESCE(p.description, '')), 'C') AS search_vector
+FROM projects p
+LEFT JOIN users a ON p.author = a.id;
+
+CREATE INDEX idx_project_search_fts ON project_search USING GIN (search_vector);
+
+-- Refresh when data changes:
+REFRESH MATERIALIZED VIEW project_search;
+
+-- Or refresh concurrently (non-blocking, requires unique index):
+CREATE UNIQUE INDEX idx_project_search_id ON project_search (id);
+REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
+"]))
+
+
+   
+
 
 
 
@@ -85,6 +116,9 @@
 #_(jdbc/execute!
    db-spec
    ["DROP TABLE  project_updates CASCADE"])
+#_(jdbc/execute!
+   db-spec
+   ["DROP TABLE  project_search CASCADE"])
 ;; (create-user-if-not-exists {:name "test" :id 123})
 
 
@@ -296,16 +330,46 @@
      ON u.author = a.id
      JOIN projects b
      ON u.project_id = b.id"])}))
-       
 
 
+
+(defn search-remove-special-chars
+  [input]
+  (-> (or input "")
+      (str/replace #"[&|!():*<>']" " ")  ; remove operators
+      str/trim))
+
+(defn str-to-search-query
+  [input]
+  (->> (str/split (search-remove-special-chars input) #"\s+")
+       (remove str/blank?)
+       (map #(str % ":*"))
+       (str/join " & ")))
+
+
+;; TODO add malli validation so we can ensure that this matches the same
+;; schema as getallprojects
+(defn search-projects [{{:keys [search-str]} :params}]
+  (def zz search-str)
+  (er-server/json-response
+   {:all-projects 
+   (let [search-query (str-to-search-query search-str)]
+    (when-not (str/blank? search-query)
+      (jdbc/query db-spec
+        ["SELECT id, name, description,
+                 ts_rank(search_vector, to_tsquery('simple', ?)) AS rank
+          FROM project_search
+          WHERE search_vector @@ to_tsquery('simple', ?)
+          ORDER BY rank DESC
+          LIMIT ?"
+         search-query search-query 100])))}))
+
+  
 
 (defn get-curr-user-info [params]
   {:status 200
    :headers {"Content-Type" "application/json"}
    :body (json/write-str (select-keys (:session params) [:id :name]))})
-
-
 
 (defn login-redirect [handler]
   (fn [request]
@@ -329,7 +393,8 @@
   (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
   (POST "/createUpdate" params (create-update params))
-  (GET "/getUpdatesList" params (get-updates-list params)))
+  (GET "/getUpdatesList" params (get-updates-list params))
+  (POST "/searchProjects" params (search-projects params)))
   
 
 
@@ -347,6 +412,7 @@
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
   (migrate-v2)
+  (migrate-v3)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
