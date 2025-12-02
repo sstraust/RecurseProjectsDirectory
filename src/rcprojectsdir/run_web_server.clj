@@ -55,7 +55,7 @@
       CREATE TABLE IF NOT EXISTS project_updates (
         id SERIAL PRIMARY KEY,
         project_id INTEGER NOT NULL,
-        description TEXT NOT NULL,
+        update_text TEXT NOT NULL,
         author INTEGER NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         FOREIGN KEY (project_id) REFERENCES projects(id),
@@ -67,21 +67,6 @@
    db-spec 
    ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
 
-
-(defn migrate-v3 []
-  (jdbc/execute!
-   db-spec
-   ["CREATE TABLE IF NOT EXISTS updates (
-       id SERIAL PRIMARY KEY,
-       update_text TEXT,
-       project_id INTEGER NOT NULL,
-       author INTEGER NOT NULL,
-       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-       FOREIGN KEY (author) REFERENCES users(id),
-       FOREIGN KEY (project_id) REFERENCES projects(id)
-     );"]))
-
-       
 
 
 
@@ -99,7 +84,7 @@
 
 #_(jdbc/execute!
    db-spec
-   ["DROP TABLE  users CASCADE"])
+   ["DROP TABLE  project_updates CASCADE"])
 ;; (create-user-if-not-exists {:name "test" :id 123})
 
 
@@ -165,6 +150,9 @@
    (head)
    [:body {:class "body-container"}
     [:div {:id "main-app"}]
+    (str "
+
+<link href=\"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap\" rel=\"stylesheet\">")
     (include-js "/resources/reload_css.js")
     (include-js "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js")
     (if (= @er-server/MODE :dev)
@@ -195,6 +183,7 @@
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:all-projects all-projects})}))
 
+(declare create-update)
 (defn create-project!
   "Create a new project row for the given user id."
   [user-id project-name description]
@@ -214,10 +203,12 @@
                 (string? project-name)
                 (not (clojure.string/blank? project-name)))
         (if-let [result (first (create-project! user-id project-name project-description))]
-          {:status  200
-           :headers {"Content-Type" "application/json"}
-           :body    (json/write-str {:ok true
-                                     :project-id (:id result)})}
+          (do (create-update {:params {:project-id (:id result)
+                                       :update-contents (str "New project created: " project-description)}})
+              {:status  200
+               :headers {"Content-Type" "application/json"}
+               :body    (json/write-str {:ok true
+                                         :project-id (:id result)})})
           (do (println "failed to create project")
           {:status  500
            :headers  {"Content-Type" "text/plain"}
@@ -283,7 +274,7 @@
        :body "Failed to find this project owned by user"}
       (if-let [db-result (jdbc/insert!
                        db-spec
-                       :updates
+                       :project_updates
                        {:update_text (str update-contents)
                         :project_id (Integer/parseInt project-id)
                         :author (:db_id (:session params))})]
@@ -295,6 +286,16 @@
          :headers {"Content-Type" "text/plain"}
          :body "Failed to insert"}))))
 
+(defn get-updates-list [params]
+  (er-server/json-response
+   {:updates-list (jdbc/query
+              db-spec
+              ["SELECT update_text, a.name AS author_name, b.name AS project_name
+     FROM project_updates u
+     JOIN users a
+     ON u.author = a.id
+     JOIN projects b
+     ON u.project_id = b.id"])}))
        
 
 
@@ -327,7 +328,8 @@
   (GET "/getUsersProjects" params (get-users-projects params))  
   (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
-  (POST "/createUpdate" params (create-update params)))
+  (POST "/createUpdate" params (create-update params))
+  (GET "/getUpdatesList" params (get-updates-list params)))
   
 
 
@@ -345,7 +347,6 @@
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (migrate-v1)
   (migrate-v2)
-  (migrate-v3)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
@@ -354,3 +355,8 @@
 
 
 ;; (run-web-server :dev)
+;; (jdbc/query db-spec ["SELECT * FROM updates"])({:id 1, :update_text "test", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:07.041901000-00:00"} {:id 2, :update_text "test update", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:42.687783000-00:00"} {:id 3, :update_text "test", :project_id 34, :author 17, :created_at #inst "2025-11-25T19:14:25.544164000-00:00"} {:id 4, :update_text "my test update!!", :project_id 26, :author 17, :created_at #inst "2025-11-25T19:18:07.494845000-00:00"})
+
+
+
+

@@ -1,10 +1,12 @@
 (ns rcprojectsdir.pages.home-page
-  (:require [reagent.core :as r]
-            [cljs-http.client :as http]
-            [easyreagent.components]
-            [rcprojectsdir.common-components.navbar :as navbar]
-            [easyreagent.components :as er]
-            [cljs.core.async :refer [<!]])
+  (:require
+   [cljs-http.client :as http]
+   [cljs.core.async :refer [<!]]
+   [easyreagent.components]
+   [easyreagent.components :as er]
+   [rcprojectsdir.common-components.navbar :as navbar]
+   [rcprojectsdir.feed.updates-feed :as updates-feed]
+   [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (def counter (r/atom 0))
@@ -25,7 +27,7 @@
 (defn default-project-name []
   (str "NewProject_" (compact-date) "#" (rand-name-str)))
 
-(defn get-users-projects [users-projects*]
+(defn get-users-projects [users-projects* selected-project-id*]
   (go
       (let [resp   (<! (http/get "/getUsersProjects"))
             body   (:body resp)
@@ -36,21 +38,11 @@
                     :else {})]
           ;;  body   (:body resp)]
         (when-let [users-projects (:users-projects parsed)]
-          (reset! users-projects* users-projects))))
+          (reset! users-projects* users-projects)
+          (reset! selected-project-id* (:id (first users-projects))))))
 )
 
-(defn get-all-projects [all-projects*]
-  (go
-      (let [resp   (<! (http/get "/getAllProjects"))
-            body   (:body resp)
-            parsed (cond
-                    (map? body) body
-                    (string? body)
-                    (js->clj (js/JSON.parse body) :keywordize-keys true)
-                    :else {})]
-        (when-let [all-projects (:all-projects parsed)]
-          (reset! all-projects* all-projects))))
-)
+
 
 (defn create-project-fn [selected-project-id* users-projects* desc*]
   (fn [e]
@@ -79,25 +71,41 @@
                   (js/alert (or (:error body) "Something went wrong creating your project.")))))))))
 
 
+(defn dropdown-list-item [selected-item item-id item-title]
+  [:li
+   [:a {:on-mouse-down #(reset! selected-item item-id)}
+       item-title]])
+
+(defn get-project-name-from-id [selected-project-id users-projects*]
+  (or
+   (some
+    (fn [x]
+      (when (= (:id x) selected-project-id)
+        (:name x))) @users-projects*)
+   (default-project-name)))
+
 (defn select-project-dropdown [selected-project-id* users-projects*]
-  [:div.self-start
-      [:select
-        {:class "select select-bordered select-xs opacity-70 subtle-select"
-        :value @selected-project-id*
-        :on-change #(reset! selected-project-id* (js/parseInt (.. % -target -value)))}
-        ;; Default option
-        [:option {:value -1}
-        (default-project-name)]
-        ;; Existing projects
-        (for [{:keys [id name]} @users-projects*]
-          ^{:key id}
-          [:option {:value id} name])]])
+  [:div.dropdown.dropdown-bottom.rounded-lg.mb-2
+   {:style {:border-style "solid"
+            :border-width 1
+            :border-color "#aaaaaa"
+            :width "19.65375rem"
+            :height "3.3125rem"}}
+   [:label.btn.btn-ghost.rounded-btn.normal-case.flex.flex-row.justify-between.font-normal.text-lg
+    {:tabIndex "0"
+     :role "button"}
+    (get-project-name-from-id @selected-project-id* users-projects*)
+    [:img {:src "resources/svgs/dropdown.svg"}]]
+    [:ul.menu.dropdown-content.bg-base-200.rounded-box.mt-4.w-52.p-2.shadow-sm
+     (for [{:keys [id name]} @users-projects*]
+       [dropdown-list-item selected-project-id* id name])]])
 
 
 (defn create-project-view [desc* selected-project-id* users-projects*]
   [:form.w-full.px-16
-     {:on-submit
-      (create-project-fn selected-project-id* users-projects* desc*)}
+   {:on-submit
+    (create-project-fn selected-project-id* users-projects* desc*)}
+    [:p.text-xs.mb-2.text-xl "Add a Project"]
 
     ;; Description input 
     [:div
@@ -134,18 +142,22 @@
 
 
 (defn existing-projects-view [desc* selected-project-id* users-projects*]
-  [:form.w-full.px-16
+  [:form.w-full
    {:on-submit (create-update-fn desc* selected-project-id*)}
-  ;;  {:on-submit (create-update-fn desc* selected-project-id* users-projects*)}
-   [:p.text-sm "post an update on an existing project"]
-   [er/text-field {:placeholder "Write a project update"
-                   :class "h-12 !max-w-none"} desc*]
-   [:div.flex.items-center.justify-between.my-4
-    [select-project-dropdown selected-project-id* users-projects*]
+   [:p.font-bold
+    {:style {:font-size "1.875rem"}}
+    "Share what you're working on:"]
+   [select-project-dropdown selected-project-id* users-projects*]
+   [er/text-area {:placeholder "Write a project update"
+                  :style {:height "5.625rem"}
+                  :class "!max-w-none"} desc*]
+   [:h-box.flex.items-start.justify-between
+    {:style {:margin-top 2}}
+    [:div "+ Additional Info"]
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
-       "Post"]]
+       "Update"]]
    ]]
   )
 
@@ -154,53 +166,33 @@
         selected-project-id* (r/atom -1)
         users-projects*     (r/atom [])]
 
-    (get-users-projects users-projects*)
+    (get-users-projects users-projects* selected-project-id*)
     (fn []
+      [:v-box.items-start.w-full
       (if (= @selected-project-id* -1)
         [create-project-view desc* selected-project-id* users-projects*]
-        [existing-projects-view desc* selected-project-id* users-projects*]))))
+        [existing-projects-view desc* selected-project-id* users-projects*])])))
 
 
 
 (defn featured []
-  [:div.h-64.w-full.bg-base-300.my-2
+  [:div.h-96.w-full.bg-base-300
+   {:style {:margin-top "1.875rem"
+            :min-height "24rem"}}
    "Featured"])
 
-(defn project-card [{:keys [id name description author created_at]}]
-  [:div.card.bg-base-100.shadow-md.mb-4
-   [:div.card-body
-    [:h3.card-title name]
-    [:p.text-sm.text-gray-500
-     (str "By user " author " · " created_at)]
-    (when (seq description)
-      [:p.mt-2 description])]])
 
-(defn feed []
-  (let [all-projects* (r/atom [])]
-    (get-all-projects all-projects*)
 
-    (fn []
-      (let [projects @all-projects*]
-        [:div.flex-grow.bg-base-300.my-4.p-4
-         [:h2.text-lg.font-bold.mb-2 "Feed"]
-
-         (cond
-           (empty? projects)
-           [:p.text-sm "No projects yet or still loading..."]
-
-           :else
-           [:div.space-y-4
-            (for [{:keys [id] :as project} projects]
-              ^{:key id}
-              [project-card project])])]))))
 
 (defn home-page []
   [:v-box.w-screen.w-screen.items-center.h-screen
-   [:v-box.w-screen.h-full.max-w-5xl
-    [navbar/full-navbar]
+   [navbar/full-navbar]
+   [:v-box.w-screen.h-full
+    {:style {:width "63rem"}}
     [update-project]
     [featured]
-    [feed]]])
+    [updates-feed/updates-feed]
+    ]])
 
 
 

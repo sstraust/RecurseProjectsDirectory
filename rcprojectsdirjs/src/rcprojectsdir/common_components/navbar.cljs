@@ -16,10 +16,17 @@
   (let [user-details-atom (r/atom nil)]
     (get-user-details user-details-atom)
     (fn []
-      [:div (first (clojure.string/split (or (:name @user-details-atom) "") #" "))])))
+      [:div (first (first (clojure.string/split (or (:name @user-details-atom) "") #" ")))])))
 
 
 (defn full-navbar []
-  [:div.navbar.text-xl
-   [:div "RC Projects"]
-   [:h-box.flex-grow.justify-end.text-xs.text-accent.items-start [user-details]]])
+  [:div.navbar.bg-base-300.w-full
+    [:div.flex-1
+     [:div.font-bold "RC Projects Directory"]]
+    [:div
+     [:button.btn.btn-outline.h-10
+      {:style {:min-height "min-content"}}
+      "+ New Project"]
+     [:div.avatar
+      [:v-box.w-10.h-10.mx-3.rounded-full.bg-base-200.justify-center.items-center
+       [user-details]]]]])

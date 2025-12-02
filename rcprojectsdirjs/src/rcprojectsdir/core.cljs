@@ -3,6 +3,7 @@
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
    [rcprojectsdir.pages.home-page :as home-page]
+   [reagent.core :as r]
    [rcprojectsdir.pages.review-project-page :as review-project-page]
    [reagent.dom :as rdom]))
 
@@ -15,11 +16,11 @@
 (defn ^:export load-page []
   (case (js* "window.location.pathname")
     "/" (load-main-page)
-    "/reviewProjectPage" (review-project-page/load-review-project-page)
-    ))
+    "/reviewProjectPage" (review-project-page/load-review-project-page)))
 
   
 (load-page)
+
 
 
 (def curr-css (atom nil))
