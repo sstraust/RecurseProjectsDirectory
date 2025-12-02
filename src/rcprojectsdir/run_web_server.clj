@@ -177,14 +177,23 @@
    :body (loading-page)})
 
 (defn get-users-projects
-  "HTTP handler: return projects for current user-id (hardcoded)"
+  "HTTP handler: return projects for current user-id"
   [request]
   (let [user-id  (:db_id (:session request))
-        projects (jdbc/query db-spec
+        users-projects (jdbc/query db-spec
                              ["SELECT * FROM projects WHERE author = ?" user-id])]
     {:status  200
      :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:projects projects})}))
+     :body    (json/write-str {:users-projects users-projects})}))
+
+(defn get-all-projects
+  "HTTP handler: return all projects"
+  [_request]
+  (let [all-projects (jdbc/query db-spec
+                             ["SELECT * FROM projects"])]
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/write-str {:all-projects all-projects})}))
 
 (defn create-project!
   "Create a new project row for the given user id."
@@ -316,6 +325,7 @@
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
   (GET "/getUsersProjects" params (get-users-projects params))  
+  (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
   (POST "/createUpdate" params (create-update params)))
   
