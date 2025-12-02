@@ -95,10 +95,16 @@ CREATE UNIQUE INDEX idx_project_search_id ON project_search (id);
 REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 "]))
 
+
+
+#_(jdbc/execute!
+   db-spec
+   ["ALTER TABLE users DROP COLUMN is_new_user"])
+
 (defn migrate-v4 []
   (jdbc/execute!
    db-spec
-   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT FALSE"]))
+   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT TRUE"]))
 
    
 
@@ -171,7 +177,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
                :session
                {:name (:name parsed-response)
                 :db_id (:id db-result)
-                :is_new_user (:is_new_user db-result)
                 :recurse_id (:id parsed-response)}))))))))
 
 
@@ -184,9 +189,13 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
    (str "<script>mode=" (json/write-str @er-server/MODE) "</script>")
    (include-css (str "/resources/global_output.css?v=" (rand-int 100000)))])
 
+(defn is-new-user [params]
+  (:is_new_user (first (jdbc/query db-spec ["SELECT is_new_user FROM users WHERE id = ?" (:db_id (:session params))]))))
+
 
 ;; now I need to pass the user session parameter to landing-page
 (defn loading-page [params]
+  (def m1 params)
   (html5
    (head)
    [:body {:class "body-container"}
@@ -196,7 +205,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 <link href=\"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap\" rel=\"stylesheet\">")
     (include-js "/resources/reload_css.js")
     (include-js "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js")
-    (str "<script>is_new_user=" (:is_new_user (:session params)) "</script>")
+    (str "<script>is_new_user=" (is-new-user params) "</script>")
     (if (= @er-server/MODE :dev)
       (include-js  (str "/out/main.js?v=" (rand-int 100000)))
       (include-js "/prod_js/main.js"))]))
@@ -205,6 +214,15 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (loading-page params)})
+
+
+(defn new-user-form-completed [params]
+  (jdbc/execute!
+   db-spec
+   ["UPDATE users
+     SET is_new_user = false
+     WHERE id = ?;"
+    (:db_id (:session params))]))
 
 (defn get-users-projects
   "HTTP handler: return projects for current user-id"
@@ -245,8 +263,9 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
                 (string? project-name)
                 (not (clojure.string/blank? project-name)))
         (if-let [result (first (create-project! user-id project-name project-description))]
-          (do (create-update {:params {:project-id (:id result)
+          (do (create-update {:params {:project-id (str (:id result))
                                        :update-contents (str "New project created: " project-description)}})
+              (new-user-form-completed request)
               {:status  200
                :headers {"Content-Type" "application/json"}
                :body    (json/write-str {:ok true
@@ -265,6 +284,8 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
         {:status  500
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
+
+;; (create-project a12)
           
 ;; use keyword destructuring to access params
 (defn get-project-details [{{:keys [project-id]} :params}]
@@ -371,6 +392,12 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
           LIMIT ?"
          search-query search-query 100])))}))
 
+
+
+
+
+   
+
   
 
 (defn get-curr-user-info [params]
@@ -403,7 +430,9 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (POST "/newProject" params (create-project params))
   (POST "/createUpdate" params (create-update params))
   (GET "/getUpdatesList" params (get-updates-list params))
-  (POST "/searchProjects" params (search-projects params)))
+  (POST "/searchProjects" params (search-projects params))
+  (POST "/newProjectPageSkip" params (new-user-form-completed params))
+  )
   
 
 
