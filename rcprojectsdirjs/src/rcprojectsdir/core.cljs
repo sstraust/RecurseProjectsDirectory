@@ -16,7 +16,7 @@
 (defn ^:export load-page []
   (case (js* "window.location.pathname")
     "/" (if js/is_new_user
-          (new-project-page/load-new-project-view)
+          (new-project-page/load-new-project-view-first-user)
           (load-main-page))
     "/reviewProjectPage" (review-project-page/load-review-project-page)))
 

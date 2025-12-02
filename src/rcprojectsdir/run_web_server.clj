@@ -353,7 +353,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (er-server/json-response
    {:updates-list (jdbc/query
               db-spec
-              ["SELECT update_text, a.name AS author_name, b.name AS project_name
+              ["SELECT update_text, a.name AS author_name, b.name AS project_name,u.created_at
      FROM project_updates u
      JOIN users a
      ON u.author = a.id

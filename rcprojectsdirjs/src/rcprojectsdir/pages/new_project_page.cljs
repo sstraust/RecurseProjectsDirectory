@@ -50,9 +50,8 @@
 
 
 
-(defn create-your-first-project []
+(defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
-    (def mm project-details-atom)
     (fn []
   [:div.w-screen.h-screen.bg-base-200
    [:div.hero
@@ -64,7 +63,7 @@
      ;; :height "44.5rem"
      }}
    [:h1.font-bold.m-10 {:style {:font-size "2.185rem"}}
-    "Create Your First Project"]
+    title-text]
 
    [:v-box.items-center.w-full
     [:v-box.self-stretch
@@ -95,6 +94,10 @@
 
 
 
+(defn load-new-project-view-first-user []
+  (rdom/render [create-your-first-project {:title-text "Create Your First Project"}]
+               (js/document.getElementById "main-app")))
+
 (defn load-new-project-view []
-  (rdom/render [create-your-first-project]
+  (rdom/render [create-your-first-project {:title-text "Tell RC about Your Project"}]
                (js/document.getElementById "main-app")))

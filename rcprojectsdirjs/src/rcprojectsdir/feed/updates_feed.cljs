@@ -7,12 +7,13 @@
    [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
-(defn get-users-projects [updates-list*]
+(defn get-updates-list [updates-list*]
   (go
     (let [resp   (:body (<! (http/get "/getUpdatesList")))]
       (if (not resp)
         (js/alert "failed to fetch updates feed")
-        (reset! updates-list* (:updates-list resp))))))
+        (do
+          (reset! updates-list* (sort-by :created_at > (:updates-list resp))))))))
 
 (defn display-update [update]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.563rem"
@@ -41,7 +42,7 @@
 (defn updates-feed []
   (let [updates-list* (r/atom nil)
         updates-selected (r/atom false)]
-    (get-users-projects updates-list*)
+    (get-updates-list updates-list*)
     (fn []
       [:v-box.bg-base-200.flex-grow.mt-9.rounded-xl
        [:h-box
