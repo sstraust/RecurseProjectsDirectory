@@ -2,6 +2,7 @@
   (:require
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
+   [clojure.string :as str]
    [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
@@ -16,8 +17,21 @@
                     (js->clj (js/JSON.parse body) :keywordize-keys true)
                     :else {})]
         (when-let [all-projects (:all-projects parsed)]
-          (reset! all-projects* all-projects))))
-  )
+          (reset! all-projects* all-projects)))))
+
+(defn get-searched-projects [search-str all-projects*]
+  (go
+    (let [resp   (<! (http/post "/searchProjects"
+                                {:form-params {:search-str search-str}}))
+            body   (:body resp)
+            parsed (cond
+                    (map? body) body
+                    (string? body)
+                    (js->clj (js/JSON.parse body) :keywordize-keys true)
+                    :else {})]
+        (when-let [all-projects (:all-projects parsed)]
+          (reset! all-projects* all-projects)))))
+  
 
 (defn project-card [{:keys [id name description author created_at]}]
   [:div.card.bg-base-100.shadow-md.mb-4
@@ -42,6 +56,13 @@
          
          :else
          [:div.space-y-4
+          [:input.input.input-bordered.w-full
+           {:type        "text"
+            :placeholder "search"
+            :on-change   #(do
+                            (if (str/blank? (.. % -target -value))
+                              (get-all-projects all-projects*)
+                              (get-searched-projects (.. % -target -value) all-projects*)))}]
           (for [{:keys [id] :as project} @all-projects*]
             ^{:key id}
             [project-card project])])])))
