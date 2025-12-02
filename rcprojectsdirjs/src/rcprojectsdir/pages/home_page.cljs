@@ -27,7 +27,7 @@
 (defn default-project-name []
   (str "NewProject_" (compact-date) "#" (rand-name-str)))
 
-(defn get-users-projects [projects* selected-project-id*]
+(defn get-users-projects [users-projects* selected-project-id*]
   (go
       (let [resp   (<! (http/get "/getUsersProjects"))
             body   (:body resp)
@@ -37,11 +37,14 @@
                     (js->clj (js/JSON.parse body) :keywordize-keys true)
                     :else {})]
           ;;  body   (:body resp)]
-        (when-let [projects (:projects parsed)]
-          (reset! projects* projects)
-          (reset! selected-project-id* (:id (first projects)))))))
+        (when-let [users-projects (:users-projects parsed)]
+          (reset! users-projects* users-projects)
+          (reset! selected-project-id* (:id (first users-projects))))))
+)
 
-(defn create-project-fn [selected-project-id* projects* desc*]
+
+
+(defn create-project-fn [selected-project-id* users-projects* desc*]
   (fn [e]
     (.preventDefault e)
     (when-not (seq @desc*)
@@ -53,7 +56,7 @@
                                                                              (some
                                                                               (fn [x]
                                                                                 (when (= (:id x) @selected-project-id*)
-                                                                                  (:name x))) @projects*)
+                                                                                  (:name x))) @users-projects*)
                                                                              (default-project-name))
                                                        :project-description @desc*}}))
                   status (:status result)
@@ -68,21 +71,20 @@
                   (js/alert (or (:error body) "Something went wrong creating your project.")))))))))
 
 
-
 (defn dropdown-list-item [selected-item item-id item-title]
   [:li
    [:a {:on-mouse-down #(reset! selected-item item-id)}
        item-title]])
 
-(defn get-project-name-from-id [selected-project-id projects*]
+(defn get-project-name-from-id [selected-project-id users-projects*]
   (or
    (some
     (fn [x]
       (when (= (:id x) selected-project-id)
-        (:name x))) @projects*)
+        (:name x))) @users-projects*)
    (default-project-name)))
 
-(defn select-project-dropdown [selected-project-id* projects*]
+(defn select-project-dropdown [selected-project-id* users-projects*]
   [:div.dropdown.dropdown-bottom.rounded-lg.mb-2
    {:style {:border-style "solid"
             :border-width 1
@@ -92,17 +94,17 @@
    [:label.btn.btn-ghost.rounded-btn.normal-case.flex.flex-row.justify-between.font-normal.text-lg
     {:tabIndex "0"
      :role "button"}
-    (get-project-name-from-id @selected-project-id* projects*)
+    (get-project-name-from-id @selected-project-id* users-projects*)
     [:img {:src "resources/svgs/dropdown.svg"}]]
     [:ul.menu.dropdown-content.bg-base-200.rounded-box.mt-4.w-52.p-2.shadow-sm
-     (for [{:keys [id name]} @projects*]
+     (for [{:keys [id name]} @users-projects*]
        [dropdown-list-item selected-project-id* id name])]])
 
 
-(defn create-project-view [desc* selected-project-id* projects*]
+(defn create-project-view [desc* selected-project-id* users-projects*]
   [:form.w-full.px-16
-     {:on-submit
-      (create-project-fn selected-project-id* projects* desc*)}
+   {:on-submit
+    (create-project-fn selected-project-id* users-projects* desc*)}
     [:p.text-xs.mb-2.text-xl "Add a Project"]
 
     ;; Description input 
@@ -116,7 +118,7 @@
     ;; Row with dropdown and button
     [:div.flex.items-center.justify-between.my-4
       ;; left side: dropdown 
-      [select-project-dropdown selected-project-id* projects*]
+      [select-project-dropdown selected-project-id* users-projects*]
 
       ;; right side: button
       [:div
@@ -124,7 +126,8 @@
         {:type "submit"}
        "Create"]]]])
 
-(defn create-update-fn [desc* selected-project-id* projects*]
+(defn create-update-fn [desc* selected-project-id*]
+;; (defn create-update-fn [desc* selected-project-id* users-projects*]
   (fn [e]
     (.preventDefault e)
     (when-not (seq @desc*)
@@ -138,13 +141,13 @@
             (js/alert "failed to update"))))))
 
 
-(defn existing-projects-view [desc* selected-project-id* projects*]
+(defn existing-projects-view [desc* selected-project-id* users-projects*]
   [:form.w-full
-   {:on-submit (create-update-fn desc* selected-project-id* projects*)}
+   {:on-submit (create-update-fn desc* selected-project-id*)}
    [:p.font-bold
     {:style {:font-size "1.875rem"}}
     "Share what you're working on:"]
-   [select-project-dropdown selected-project-id* projects*]
+   [select-project-dropdown selected-project-id* users-projects*]
    [er/text-area {:placeholder "Write a project update"
                   :style {:height "5.625rem"}
                   :class "!max-w-none"} desc*]
@@ -161,25 +164,25 @@
 (defn update-project []
   (let [desc*         (r/atom "")
         selected-project-id* (r/atom -1)
-        projects*     (r/atom nil)]
+        users-projects*     (r/atom [])]
 
-    (get-users-projects projects* selected-project-id*)
+    (get-users-projects users-projects* selected-project-id*)
     (fn []
       [:v-box.items-start.w-full
       (if (= @selected-project-id* -1)
-        [create-project-view desc* selected-project-id* projects*]
-        [existing-projects-view desc* selected-project-id* projects*])])))
+        [create-project-view desc* selected-project-id* users-projects*]
+        [existing-projects-view desc* selected-project-id* users-projects*])])))
 
 
 
 (defn featured []
   [:div.h-96.w-full.bg-base-300
-   {:style {:margin-top "1.875rem"}}
+   {:style {:margin-top "1.875rem"
+            :min-height "24rem"}}
    "Featured"])
 
-(defn feed []
-  [:div.flex-grow.bg-base-300.my-4
-   "Feed"])
+
+
 
 (defn home-page []
   [:v-box.w-screen.w-screen.items-center.h-screen
@@ -189,7 +192,6 @@
     [update-project]
     [featured]
     [updates-feed/updates-feed]
-    ;; [feed]
     ]])
 
 
