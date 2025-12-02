@@ -190,7 +190,6 @@
    [:v-box.w-screen.h-full
     {:style {:width "63rem"}}
     [update-project]
-    [featured]
     [updates-feed/updates-feed]
     ]])
 
