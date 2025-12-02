@@ -2,6 +2,7 @@
   (:require
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
+   [rcprojectsdir.pages.new-project-page :as new-project-page]
    [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
@@ -25,7 +26,8 @@
      [:div.font-bold "RC Projects Directory"]]
     [:div
      [:button.btn.btn-outline.h-10
-      {:style {:min-height "min-content"}}
+      {:style {:min-height "min-content"}
+       :on-click new-project-page/load-new-project-view}
       "+ New Project"]
      [:div.avatar
       [:v-box.w-10.h-10.mx-3.rounded-full.bg-base-200.justify-center.items-center

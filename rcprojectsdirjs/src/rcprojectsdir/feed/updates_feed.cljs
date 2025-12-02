@@ -13,7 +13,6 @@
       (if (not resp)
         (js/alert "failed to fetch updates feed")
         (do
-          (def zz updates-list*)
           (reset! updates-list* (sort-by :created_at > (:updates-list resp))))))))
 
 (defn display-update [update]
