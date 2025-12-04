@@ -284,7 +284,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
 
 (defn create-project [request]
-  (def bb request)
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
         links               (vec->pg-array
@@ -317,21 +316,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
         {:status  500
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
-
-
-
-
-;; (let [request bb
-;;       project-description (get-in request [:params :project-description])
-;;       project-name        (get-in request [:params :project-name])
-;;       links               (vec->pg-array
-;;                            db-spec "TEXT"
-;;                            (into [] (rest (get-in request [:params :project-links]))))
-;;       user-id             (:db_id (:session request))]
-;;   (create-project! user-id project-name project-description links))
-  
-
-
 
 ;; (create-project a12)
           
