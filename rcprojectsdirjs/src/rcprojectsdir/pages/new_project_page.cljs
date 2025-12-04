@@ -191,7 +191,7 @@
      [create-project-field-description (r/cursor project-details-atom [:description]) "Description" "Starting to work on a new app..."
       "(Can just be one line)"]
      [:div {:style {:height "1.875rem"}}  " "]
-     [create-project-field-link (r/cursor project-details-atom [:link]) "Link" "github.com/name/thisproject"
+     [create-project-field-link (r/cursor project-details-atom [:links]) "Link" "github.com/name/thisproject"
       "(Optional)"]
      [:div {:style {:height "1.875rem"}}  " "]
      [create-project-screenshots-mockup (r/cursor project-details-atom [:screenshots]) "Screenshots" "Drag and drop or \"Browse\" to upload"
