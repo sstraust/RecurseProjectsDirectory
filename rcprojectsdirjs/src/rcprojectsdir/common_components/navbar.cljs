@@ -21,14 +21,31 @@
 
 
 (defn full-navbar []
-  [:div.navbar.bg-base-300.w-full
+  [:h-box.bg-base-300.w-full.items-center
+   {:style {:background-color "#D9D9D9"
+            :min-height "6.125rem"}}
     [:div.flex-1
-     [:div.font-bold "RC Projects Directory"]]
-    [:div
-     [:button.btn.btn-outline.h-10
-      {:style {:min-height "min-content"}
+     [:div.font-bold {:style {:margin-left "2.5rem"
+                              :font-size "1.25rem"}}
+      "RC Projects Directory"]]
+   [:h-box.h-full.items-center
+    {:style
+     {:padding-top "0.9375rem"
+      :padding-bottom "0.9375rem"}}
+     [:button.btn.btn-outline.h-full.normal-case
+      {:style {:min-height "min-content"
+               :padding-left "1.875rem"
+               :padding-right "1.875rem"
+               :max-height "none"
+               :font-size "1.5rem"
+               :background-color "#353535"
+               :color "#E6E6E6"}
        :on-click new-project-page/load-new-project-view}
       "+ New Project"]
      [:div.avatar
-      [:v-box.w-10.h-10.mx-3.rounded-full.bg-base-200.justify-center.items-center
+      [:v-box.w-10.h-10.mx-3.rounded-full.bg-base-200.justify-center.items-center.font-bold
+       {:style {:background-color "#9B9B9B"
+                :font-size "2.5rem"
+                :height "4.25rem"
+                :width "4.25rem"}}
        [user-details]]]]])

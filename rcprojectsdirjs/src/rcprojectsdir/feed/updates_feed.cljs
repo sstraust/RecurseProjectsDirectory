@@ -16,51 +16,91 @@
           (reset! updates-list* (sort-by :created_at > (:updates-list resp))))))))
 
 (defn display-update [update]
-  [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.563rem"
-                                          :margin-right "1.813rem"}}
+  [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
+                                          :margin-right "1.875rem"}}
    [:h-box.justify-between.items-center
     {:style {:margin-right "1.875rem"}}
     [:v-box
      {:style {:margin-top "1.5rem"
-              :margin-left "1.1825rem"}}
+              :margin-left "1.875rem"}}
      [:h2.font-bold
+      
       {:style {:font-size "2.1875rem"}}
       (:project_name update)]
-     [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
-      (:author_name update)]]
+     [:h-box
+      [:div.rounded-full
+       {:style
+        {:width "2.0625rem"
+         :height "2.0625rem"
+         :background-color "#9B9B9B"
+         :margin-right "0.625rem"}}
+       "."]
+      [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
+       (:author_name update)]]]
     [:div.badge.bg-badge-primary.font-semibold.px-5
      {:style {:height "2.688rem"
+              :background-color "#86CEFF"
               :font-size "1.25rem"}}
      "Updated Today"]]
-   [:div.font-normal
+   [:h-box.justify-between.w-full
+    [:div.font-normal
     {:style {:margin-left "3.438rem"
-             :padding-bottom "3.125rem"
-             :margin-top "2.063rem"
+             :padding-bottom "1.875rem"
+             :margin-top "1.875rem"
              :font-size "1.563rem"}}
-    (:update_text update)]])
+     (:update_text update)]
+    [:div.self-end.font-bold.underline
+     {:style {:padding-bottom "1.875rem"
+              :padding-right "1.875rem"
+              :font-size "1.5rem"
+              }}
+     "View →"]]
+    ])
+
+
+
+(defn choose-menu-button [menu-name menu-id currently-selected-menu*]
+  [:h1.font-bold.h-16.cursor-pointer
+   {:style (merge {:margin-top "1.875rem"
+                   
+                   :font-size "1.5625rem"}
+                  (if (not (= menu-id @currently-selected-menu*))
+                    {:height "2.5625rem"}
+                    {:height "2.75rem"}
+                    ))
+    :class (if (= menu-id @currently-selected-menu*)
+             "border-b border-base-content border-b-4"
+             "border-b border-base-content border-b-1")
+    :on-click #(reset! currently-selected-menu* menu-id)}
+   menu-name])
+
+(defn choose-menu-spacer []
+  [:div {:style {:padding-left "1.438rem"
+                 :margin-top "1.875rem"
+                 :height "2.5625rem"
+                 }
+         :class "border-b border-base-content border-b-1"} ""])
+  
+  
+
 
 (defn updates-feed []
   (let [updates-list* (r/atom nil)
-        updates-selected (r/atom false)]
+        selected-menu* (r/atom ::recent-activity)
+        updates-selected (r/atom true)]
     (get-updates-list updates-list*)
     (fn []
-      [:v-box.bg-base-200.flex-grow.mt-9.rounded-xl
+      [:<>
        [:h-box
-        [:h1.font-bold.h-16.cursor-pointer
-         {:style {:margin-top "1.875rem"
-                  :font-size "1.563rem"
-                  :margin-left "1.438rem"}
-          :class (when (not @updates-selected) "underline")
-          :on-click #(reset! updates-selected false)}
-         "Projects"]
-
-        [:h1.font-bold.h-16.cursor-pointer
-         {:style {:margin-top "1.875rem"
-                  :font-size "1.563rem"
-                  :margin-left "1.438rem"}
-          :class (when @updates-selected "underline")
-          :on-click #(reset! updates-selected true)}
-         "Updates"]]
+        {:style {:margin-bottom "0.625rem"}}
+        [choose-menu-button  "Recent Activity" ::recent-activity selected-menu*]
+        [choose-menu-spacer]
+        [choose-menu-button  "All Projects" ::all-projects selected-menu*]
+        [choose-menu-spacer]
+        [choose-menu-button  "My Projects" ::users-projects selected-menu*]]
+       [:v-box.flex-grow.rounded-xl
+        {:style {:padding-top "1.875rem"
+                 :background-color "#F0F0F0"}}
        (cond
          @updates-selected
          [:v-box
@@ -68,4 +108,4 @@
           (for [update @updates-list*]
             [display-update update])]
          :else
-         [projects-feed/projects-feed])])))
+         [projects-feed/projects-feed])]])))

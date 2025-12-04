@@ -143,17 +143,34 @@
 
 (defn existing-projects-view [desc* selected-project-id* users-projects*]
   [:form.w-full
-   {:on-submit (create-update-fn desc* selected-project-id*)}
+   {:on-submit (create-update-fn desc* selected-project-id*)
+    :style {:margin-top "3.75rem"
+            :line-height "100%"
+            :margin-bottom "3.75rem"}}
    [:p.font-bold
-    {:style {:font-size "1.875rem"}}
+    {:style {:font-size "1.875rem"
+             :height "2.1875rem"
+             :line-height "100%"
+             :margin-bottom "0.9375rem"}}
     "Share what you're working on:"]
-   [select-project-dropdown selected-project-id* users-projects*]
-   [er/text-area {:placeholder "Write a project update"
-                  :style {:height "5.625rem"}
+   [:div
+    {:style {:margin-bottom "0.9375rem"}}
+    [select-project-dropdown selected-project-id* users-projects*]]
+   [er/text-area {:placeholder "Add an update"
+                  :style {:height "5.625rem"
+                          :padding-top "0.9375rem"
+                          :padding-left "1.25rem"
+                          :font-size "1.25rem"}
                   :class "!max-w-none"} desc*]
    [:h-box.flex.items-start.justify-between
-    {:style {:margin-top 2}}
-    [:div "+ Additional Info"]
+    {:style {:margin-top "0.9375rem"}}
+    [:h-box.items-center
+     [:div "+"]
+    [:div.font-medium.underline
+     {:style {:height "1.4375rem"
+              :padding-left "0.9375rem"
+              :font-size "1.25rem"}}
+     "Add additional info"]]
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
