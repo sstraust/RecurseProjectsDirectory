@@ -97,18 +97,40 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 
 
 
-#_(jdbc/execute!
-   db-spec
-   ["ALTER TABLE users DROP COLUMN is_new_user"])
+#_(do (jdbc/execute!
+       db-spec
+       ["ALTER TABLE users DROP COLUMN is_new_user"])
+      (migrate-v4))
 
 (defn migrate-v4 []
   (jdbc/execute!
    db-spec
    ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT TRUE"]))
 
-   
 
 
+(defn migrate-v5 []
+  (jdbc/execute!
+   db-spec
+   ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_links TEXT[] DEFAULT '{}';"])
+
+  
+  (jdbc/execute!
+   db-spec
+   ["CREATE TABLE IF NOT EXISTS project_images (
+      id SERIAL PRIMARY KEY,
+      project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+      file_path TEXT NOT NULL
+    )"]))
+
+#_(jdbc/query
+   db-spec
+   ["SELECT * FROM projects"])
+
+
+#_(jdbc/query
+   db-spec
+   ["SELECT * FROM users"])
 
 
 #_(jdbc/execute!
@@ -126,6 +148,9 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 #_(jdbc/execute!
    db-spec
    ["DROP TABLE  project_updates CASCADE"])
+#_(jdbc/execute!
+   db-spec
+   ["DROP TABLE  projects CASCADE"])
 #_(jdbc/execute!
    db-spec
    ["DROP TABLE  project_search CASCADE"])
@@ -229,7 +254,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   [request]
   (let [user-id  (:db_id (:session request))
         users-projects (jdbc/query db-spec
-                             ["SELECT * FROM projects WHERE author = ?" user-id])]
+                             ["SELECT name, description, author, created_at FROM projects WHERE author = ?" user-id])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:users-projects users-projects})}))
@@ -238,7 +263,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   "HTTP handler: return all projects"
   [_request]
   (let [all-projects (jdbc/query db-spec
-                             ["SELECT * FROM projects"])]
+                             ["SELECT name, description, author, created_at FROM projects"])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:all-projects all-projects})}))
@@ -246,23 +271,31 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 (declare create-update)
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id project-name description]
+  [user-id project-name description links]
   (jdbc/insert!
    db-spec
    :projects
    {:name project-name
     :description description
+    :project_links links
     :author user-id}))
 
+(defn vec->pg-array [conn type-name coll]
+  (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
+
 (defn create-project [request]
+  (def bb request)
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
+        links               (vec->pg-array
+                             db-spec "TEXT"
+                             (rest (get-in request [:params :project-links])))
         user-id             (:db_id (:session request))]
     (try
       (if (and (string? project-description)
                 (string? project-name)
                 (not (clojure.string/blank? project-name)))
-        (if-let [result (first (create-project! user-id project-name project-description))]
+        (if-let [result (first (create-project! user-id project-name project-description links))]
           (do (create-update {:params {:project-id (str (:id result))
                                        :update-contents (str "New project created: " project-description)}})
               (new-user-form-completed request)
@@ -284,6 +317,21 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
         {:status  500
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
+
+
+
+
+;; (let [request bb
+;;       project-description (get-in request [:params :project-description])
+;;       project-name        (get-in request [:params :project-name])
+;;       links               (vec->pg-array
+;;                            db-spec "TEXT"
+;;                            (into [] (rest (get-in request [:params :project-links]))))
+;;       user-id             (:db_id (:session request))]
+;;   (create-project! user-id project-name project-description links))
+  
+
+
 
 ;; (create-project a12)
           
@@ -452,6 +500,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (migrate-v2)
   (migrate-v3)
   (migrate-v4)
+  (migrate-v5)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001

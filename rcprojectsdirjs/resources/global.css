@@ -10,3 +10,6 @@
     align-self: flex-start;
     width: 15rem;
 }
+html {
+  font-size: 85.5%; /* 1rem = 10px (62.5% of 16px) */
+}

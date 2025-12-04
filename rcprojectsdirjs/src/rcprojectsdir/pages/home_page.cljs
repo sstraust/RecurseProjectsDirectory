@@ -101,6 +101,27 @@
        [dropdown-list-item selected-project-id* id name])]])
 
 
+(comment
+  [:input {:type "file"
+                 :class "file-input file-input-bordered w-full"
+                 :multiple true
+                 :accept "image/*"
+                 :on-change (fn [e]
+                              (let [files (-> e .-target .-files array-seq)]
+                                ;; Revoke old URLs to prevent memory leaks
+                                (doseq [url @preview-urls]
+                                  (.revokeObjectURL js/URL url))
+                                (reset! images files)
+                                (reset! preview-urls
+                                        (mapv #(.createObjectURL js/URL %) files))))}]
+
+  )
+
+
+
+  
+
+
 (defn create-project-view [desc* selected-project-id* users-projects*]
   [:form.w-full.px-16
    {:on-submit
@@ -186,8 +207,8 @@
     (get-users-projects users-projects* selected-project-id*)
     (fn []
       [:v-box.items-start.w-full
-      (if (= @selected-project-id* -1)
-        [create-project-view desc* selected-project-id* users-projects*]
+      (when (not (= @selected-project-id* -1))
+        ;; [create-project-view desc* selected-project-id* users-projects*]
         [existing-projects-view desc* selected-project-id* users-projects*])])))
 
 
@@ -209,6 +230,3 @@
     [update-project]
     [updates-feed/updates-feed]
     ]])
-
-
-

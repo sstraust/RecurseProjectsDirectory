@@ -106,5 +106,6 @@
           {:style {:gap "3.875rem"}}
           (for [update @updates-list*]
             [display-update update])]
+         
          (= @selected-menu* ::all-projects)
          [projects-feed/projects-feed])]])))
