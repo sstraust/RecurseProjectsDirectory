@@ -2,6 +2,7 @@
   (:require
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
+   [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom :as rdom])
   (:require-macros [cljs.core.async.macros :refer [go]]))
@@ -97,49 +98,116 @@
     subtext]
    ])
 
-(defn create-project-screenshots-mockup [content* label-name placeholder subtext]
-  [:<>
-   [:label.font-semibold
-    {:style {:font-size "1.25rem"
-             :margin-bottom "0.625rem"}}
-    label-name]
-   [:h-box.items-center
-    [:input.input.input-bordered.flex-grow
-     {:type "text"
-      :style {:font-size "1.25rem"
-              :height "3.3125rem"
-              }
-      :value       @content*
-      :on-change   #(reset! content* (.. % -target -value))
-      :placeholder placeholder}]
-    [:button.normal-case.font-bold.border.border-1.rounded-xl
-     {:style {:margin-left  "1.875rem"
-              :min-width "9.125rem"
-              :min-height "3.3125rem"
-              :font-size "1.5rem"
-              :line-height "100%"}}
-     "Browse"]]
-   
-   [:p.font-medium
-    {:style
-     {:height "0.875rem"
-      :color "#717171"
-      :font-size "0.75rem"
-      :margin-top "0.625rem"
-      }}
-    subtext]
-   ])
+(defn upload-image [images-map-cursor* label-name placeholder subtext]
+  (let [images (r/cursor images-map-cursor* [:image-data])
+        preview-urls (r/cursor images-map-cursor* [:preview-urls])
+        file-input-ref (atom nil)
+        dragging? (r/atom false)
+        
+        handle-files (fn [files]
+                       (let [image-files (filter #(-> % .-type (.startsWith "image/")) files)
+                             new-urls (mapv #(.createObjectURL js/URL %) image-files)]
+                         (swap! images into image-files)
+                         (swap! preview-urls into new-urls)))]
+    (fn []
+      [:<>
+       [:label.font-semibold
+        {:style {:font-size "1.25rem"
+                 :margin-bottom "0.625rem"}}
+        label-name]
+       
+       ;; Drop zone wrapper
+       [:div {:class (str "relative " (when @dragging? "ring-2 ring-primary ring-offset-2 rounded-lg"))
+              :on-drag-over (fn [e]
+                              (.preventDefault e)
+                              (.stopPropagation e))
+              :on-drag-enter (fn [e]
+                               (.preventDefault e)
+                               (.stopPropagation e)
+                               (reset! dragging? true))
+              :on-drag-leave (fn [e]
+                               (.preventDefault e)
+                               (.stopPropagation e)
+                               ;; Only set false if leaving the container entirely
+                               (when (not (.contains (.-currentTarget e) (.-relatedTarget e)))
+                                 (reset! dragging? false)))
+              :on-drop (fn [e]
+                         (.preventDefault e)
+                         (.stopPropagation e)
+                         (reset! dragging? false)
+                         (let [files (-> e .-dataTransfer .-files array-seq)]
+                           (handle-files files)))}
+        
+        [:input {:type "file"
+                 :ref #(reset! file-input-ref %)
+                 :class "hidden"
+                 :multiple true
+                 :accept "image/*"
+                 :on-change (fn [e]
+                              (let [files (-> e .-target .-files array-seq)]
+                                (handle-files files)
+                                (set! (.-value (.-target e)) "")))}]
+        
+        [:h-box.items-center
+         [:input.input.input-bordered.flex-grow
+          {:type "text"
+           :style {:font-size "1.25rem"
+                   :height "3.3125rem"}
+           :value (if (seq @images)
+                    (str (count @images) " file(s) selected")
+                    "")
+           :read-only true
+           :placeholder placeholder}]
+         [:button.normal-case.font-bold.border.border-1.rounded-xl
+          {:type "button"
+           :style {:margin-left "1.875rem"
+                   :min-width "9.125rem"
+                   :min-height "3.3125rem"
+                   :font-size "1.5rem"
+                   :line-height "100%"}
+           :on-click #(when @file-input-ref (.click @file-input-ref))}
+          "Browse"]]
+        
+        ;; Drag overlay indicator
+        (when @dragging?
+          [:div {:class "absolute inset-0 bg-primary/10 rounded-lg flex items-center justify-center pointer-events-none"}
+           [:span {:class "text-primary font-semibold"} "Drop images here"]])]
+       
+       (if (not (seq @images))
+         [:p.font-medium
+          {:style {:height "0.875rem"
+                   :color "#717171"
+                   :font-size "0.75rem"
+                   :margin-top "0.625rem"}}
+          subtext]
+         [:div {:class "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4"}
+          (for [[idx url] (map-indexed vector @preview-urls)]
+            ^{:key url}
+            [:div {:class "relative group"}
+             [:img {:src url
+                    :class "w-full h-32 object-cover rounded-lg"}]
+             [:button {:type "button"
+                       :class "btn btn-circle btn-error btn-xs absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                       :on-click (fn []
+                                   (.revokeObjectURL js/URL url)
+                                   (swap! images #(vec (concat (take idx %) (drop (inc idx) %))))
+                                   (swap! preview-urls #(vec (concat (take idx %) (drop (inc idx) %)))))}
+              "✕"]])])])))
 
 
 (defn create-project-fn [project-details-atom]
   (fn [e]
     (.preventDefault e)
-    (def aa {:form-params {:project-name (:name @project-details-atom)
-                   :project-description (:description @project-details-atom)}})
   (go
     (let [result (<! (http/post "/newProject"
                                 {:form-params {:project-name (:name @project-details-atom)
-                                               :project-description (:description @project-details-atom)}}))
+                                               :project-description (:description @project-details-atom)
+                                               :project-links  (concat
+                                                                ;; add unused first element as workaround for automatic coalescing
+                                                                [:links]
+                                                                (when (not (str/blank? (:link @project-details-atom)))
+                                                                        [(:link @project-details-atom)])
+                                                                      )}}))
           status (:status result)
           body   (some-> (:body result)
                          (js->clj :keywordize-keys true))]
@@ -151,6 +219,7 @@
         (do
           (.error js/console "Failed to create project" (clj->js result))
           (js/alert (or (:error body) "Something went wrong creating your project."))))))))
+
 
 
 
@@ -194,7 +263,8 @@
      [create-project-field-link (r/cursor project-details-atom [:link]) "Link" "github.com/name/thisproject"
       "(Optional)"]
      [:div {:style {:height "1.875rem"}}  " "]
-     [create-project-screenshots-mockup (r/cursor project-details-atom [:screenshots]) "Screenshots" "Drag and drop or \"Browse\" to upload"
+     [upload-image (r/cursor project-details-atom [:images])
+      "Screenshots" "Drag and drop or \"Browse\" to upload"
       "(Optional)"]
      
      [:div {:style {:height 28}}  " "]     
@@ -219,6 +289,8 @@
                 :font-size "1.5rem"
                 :height "4.25rem"}}
        "Create"]]]]]]]])))
+
+
 
 
 
