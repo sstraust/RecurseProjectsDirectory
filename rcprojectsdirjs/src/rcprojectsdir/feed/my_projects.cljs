@@ -19,20 +19,6 @@
         (when-let [users-projects (:users-projects parsed)]
           (reset! users-projects* (sort-by :created_at > users-projects))))))
 
-(defn get-searched-projects [search-str users-projects*]
-  (go
-    (let [resp   (<! (http/post "/searchProjects"
-                                {:form-params {:search-str search-str}}))
-            body   (:body resp)
-            parsed (cond
-                    (map? body) body
-                    (string? body)
-                    (js->clj (js/JSON.parse body) :keywordize-keys true)
-                    :else {})]
-        (when-let [users-projects (:users-projects parsed)]
-          (reset! users-projects* (sort-by :created_at > users-projects))))))
-  
-
 (defn project-card [{:keys [id name description author created_at]}]
   [:div.bg-base-100.shadow-md.mb-4.rounded-xl
    [:div.card-body
@@ -56,13 +42,6 @@
          
          :else
          [:div.space-y-4
-          [:input.input.input-bordered.w-full
-           {:type        "text"
-            :placeholder "search"
-            :on-change   #(do
-                            (if (str/blank? (.. % -target -value))
-                              (get-users-projects users-projects*)
-                              (get-searched-projects (.. % -target -value) users-projects*)))}]
           (for [{:keys [id] :as project} @users-projects*]
             ^{:key id}
             [project-card project])])])))
