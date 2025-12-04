@@ -186,8 +186,8 @@
     (get-users-projects users-projects* selected-project-id*)
     (fn []
       [:v-box.items-start.w-full
-      (if (= @selected-project-id* -1)
-        [create-project-view desc* selected-project-id* users-projects*]
+      (when (not (= @selected-project-id* -1))
+        ;; [create-project-view desc* selected-project-id* users-projects*]
         [existing-projects-view desc* selected-project-id* users-projects*])])))
 
 
@@ -209,6 +209,3 @@
     [update-project]
     [updates-feed/updates-feed]
     ]])
-
-
-
