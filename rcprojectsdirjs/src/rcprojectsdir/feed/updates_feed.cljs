@@ -4,6 +4,7 @@
    [cljs.core.async :refer [<!]]
    [easyreagent.components]
    [rcprojectsdir.feed.projects-feed :as projects-feed]
+   [rcprojectsdir.feed.my-projects :as my-projects]
    [reagent.core :as r])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
@@ -107,4 +108,6 @@
           (for [update @updates-list*]
             [display-update update])]
          (= @selected-menu* ::all-projects)
-         [projects-feed/projects-feed])]])))
+         [projects-feed/projects-feed]
+         (= @selected-menu* ::users-projects)
+         [my-projects/my-projects])]])))
