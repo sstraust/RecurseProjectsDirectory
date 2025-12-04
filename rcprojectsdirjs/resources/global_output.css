@@ -2901,6 +2901,10 @@ details.collapse summary::-webkit-details-marker{
   color: hsl(var(--bc) / 0.6);
 }
 
+.textarea-bordered{
+  --tw-border-opacity: 0.2;
+}
+
 .textarea:focus{
   outline-style: solid;
   outline-width: 2px;
@@ -3616,6 +3620,10 @@ details.collapse summary::-webkit-details-marker{
   --tw-space-y-reverse: 0;
   margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+
+.self-start{
+  align-self: flex-start;
 }
 
 .self-end{
