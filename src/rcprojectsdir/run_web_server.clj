@@ -106,6 +106,15 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
    db-spec
    ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT TRUE"]))
 
+(defn migrate-v5 []
+  (jdbc/execute!
+   db-spec 
+   ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_links TEXT[] UNIQUE;"])
+  (jdbc/execute!
+   db-spec 
+   ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS images INTEGER[] UNIQUE;"]))
+
+
    
 
 

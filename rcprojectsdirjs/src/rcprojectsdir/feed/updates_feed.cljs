@@ -86,8 +86,7 @@
 
 (defn updates-feed []
   (let [updates-list* (r/atom nil)
-        selected-menu* (r/atom ::recent-activity)
-        updates-selected (r/atom true)]
+        selected-menu* (r/atom ::recent-activity)]
     (get-updates-list updates-list*)
     (fn []
       [:<>
@@ -102,10 +101,10 @@
         {:style {:padding-top "1.875rem"
                  :background-color "#F0F0F0"}}
        (cond
-         @updates-selected
+         (= @selected-menu* ::recent-activity)
          [:v-box
           {:style {:gap "3.875rem"}}
           (for [update @updates-list*]
             [display-update update])]
-         :else
+         (= @selected-menu* ::all-projects)
          [projects-feed/projects-feed])]])))
