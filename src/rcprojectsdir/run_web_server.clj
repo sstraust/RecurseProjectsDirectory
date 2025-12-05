@@ -9,6 +9,7 @@
    [hiccup.page :refer [html5 include-css include-js]]
    [libpython-clj2.python :as py]
    [libpython-clj2.require :refer [require-python]]
+   [clojure.java.io :as io]
    [ring.util.response :as response]))
 
 (require-python '[requests_oauthlib :refer [OAuth2Session]])
@@ -174,7 +175,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
     name
     id])))
                      
-  
+
 
 (defn handle-redirect-response [params]
   (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
@@ -269,16 +270,41 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
      :body    (json/write-str {:all-projects all-projects})}))
 
 (declare create-update)
+
+
+(def images-dir "resources/user_images/")
+(defn save-image-to-project
+  [project-id {:keys [filename tempfile]}]
+  (let [;; Generate unique filename to avoid collisions
+        unique-name (str (java.util.UUID/randomUUID))
+        dest-path   (str images-dir "/" unique-name)
+        dest-file   (io/file dest-path)]
+    (io/make-parents dest-file)
+    (io/copy tempfile dest-file)
+    (jdbc/insert! db-spec :project_images
+                  {:project_id project-id
+                   :file_path  dest-path})))
+
+(defn save-project-images [project-id images]
+  (doseq [image images]
+    (save-image-to-project project-id image)))
+
+
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id project-name description links]
-  (jdbc/insert!
-   db-spec
-   :projects
-   {:name project-name
-    :description description
-    :project_links links
-    :author user-id}))
+  [user-id project-name description links images]
+  (let [insert-result (jdbc/insert!
+                       db-spec
+                       :projects
+                       {:name project-name
+                        :description description
+                        :project_links links
+                        :author user-id})]
+    (save-project-images (:id (first insert-result)) images)
+    insert-result))
+
+
+            
 
 (defn vec->pg-array [conn type-name coll]
   (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
@@ -289,12 +315,15 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
         links               (vec->pg-array
                              db-spec "TEXT"
                              (rest (get-in request [:params :project-links])))
-        user-id             (:db_id (:session request))]
+        user-id             (:db_id (:session request))
+        images              (if (map? (:images (:params request)))
+                              [(:images (:params request))]
+                              (:images (:params request)))]
     (try
       (if (and (string? project-description)
                 (string? project-name)
                 (not (clojure.string/blank? project-name)))
-        (if-let [result (first (create-project! user-id project-name project-description links))]
+        (if-let [result (first (create-project! user-id project-name project-description links images))]
           (do (create-update {:params {:project-id (str (:id result))
                                        :update-contents (str "New project created: " project-description)}})
               (new-user-form-completed request)
@@ -317,8 +346,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
 
-;; (create-project a12)
-          
+
 ;; use keyword destructuring to access params
 (defn get-project-details [{{:keys [project-id]} :params}]
   (let [query-result (first
@@ -333,8 +361,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
       {:status 500
        :headers {"Content-Type" "text/plain"}
        :body "Failed to Fetch Project"})))
-
-
 
 
 
@@ -357,7 +383,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
       {:status 500
        :headers {"Content-Type" "text/plain"}
        :body "Failed to Edit Project"})))
-
 
 (defn create-update [{{:keys [project-id update-contents]} :params :as params}]
   (if-not (= (:status (get-project-details params)) 200)
@@ -493,8 +518,10 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 
 
 ;; (run-web-server :dev)
+
+
+
+
 ;; (jdbc/query db-spec ["SELECT * FROM updates"])({:id 1, :update_text "test", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:07.041901000-00:00"} {:id 2, :update_text "test update", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:42.687783000-00:00"} {:id 3, :update_text "test", :project_id 34, :author 17, :created_at #inst "2025-11-25T19:14:25.544164000-00:00"} {:id 4, :update_text "my test update!!", :project_id 26, :author 17, :created_at #inst "2025-11-25T19:18:07.494845000-00:00"})
-
-
 
 

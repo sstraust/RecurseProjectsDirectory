@@ -8,8 +8,9 @@
          compojure/compojure {:mvn/version "1.4.0"}
          me.raynes/conch {:mvn/version "0.8.0"}
          org.clojure/data.json {:mvn/version "2.4.0"}
+         ;; io.github.sstraust/easyreagent {:local/root "../easyreagentpublic/server"}
          io.github.sstraust/easyreagent {:git/url "https://github.com/sstraust/easyreagent.git"
-                                         :git/sha "86358eccedc82eeeb76bf4f4b0bfae1af238ffd4"
+                                         :git/sha "5a6eeb147512fbbaf1b39cce6e9eb2093d3708dd"
                                          :deps/root "server"}
          clj-time/clj-time {:mvn/version "0.15.2"}
          hiccup/hiccup {:mvn/version "1.0.5"}
