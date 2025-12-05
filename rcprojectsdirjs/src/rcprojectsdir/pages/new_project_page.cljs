@@ -194,9 +194,6 @@
                                    (swap! preview-urls #(vec (concat (take idx %) (drop (inc idx) %)))))}
               "✕"]])])])))
 
-
-
-
 (defn create-project-fn [project-details*]
   (fn [e] 
   (let [fd (js/FormData.)]
@@ -218,10 +215,6 @@
         (.catch #(js/alert  "Something went wrong creating your project."))))))
 
     
-
-
-    
-
 (defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
     (fn []
