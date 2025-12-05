@@ -195,34 +195,32 @@
               "✕"]])])])))
 
 
-(defn create-project-fn [project-details-atom]
-  (fn [e]
-    (.preventDefault e)
-  (go
-    (let [result (<! (http/post "/newProject"
-                                {:form-params {:project-name (:name @project-details-atom)
-                                               :project-description (:description @project-details-atom)
-                                               :project-links  (concat
-                                                                ;; add unused first element as workaround for automatic coalescing
-                                                                [:links]
-                                                                (when (not (str/blank? (:link @project-details-atom)))
-                                                                        [(:link @project-details-atom)])
-                                                                      )}}))
-          status (:status result)
-          body   (some-> (:body result)
-                         (js->clj :keywordize-keys true))]
-      (if (= status 200)
-        (do
-          (set! (.-href (.-location js/window)) "/"
-                ;; (str "/reviewProjectPage?project=" (:project-id (:body result)))
-                ))
-        (do
-          (.error js/console "Failed to create project" (clj->js result))
-          (js/alert (or (:error body) "Something went wrong creating your project."))))))))
 
 
+(defn create-project-fn [project-details*]
+  (fn [e] 
+  (let [fd (js/FormData.)]
+    (.append fd "project-name" (:title @project-details*))
+    (.append fd "project-description" (:description @project-details*))
+    (.append fd "project-links" (concat
+                                 ;; add unused first element as workaround for automatic coalescing
+                                 [:links]
+                                 (when (not (str/blank? (:link @project-details*)))
+                                   [(:link @project-details*)])))
+    (.append fd "project-images" (doseq [img (:image-data (:images @project-details*))]
+                                   (.append fd "images" img (.-name img))))
+
+    (-> (js/fetch "/newProject"
+                  #js {:method "POST"
+                       :body fd})
+        (.then #(.json %))
+        (.then #(set! (.-href (.-location js/window)) "/"))
+        (.catch #(js/alert  "Something went wrong creating your project."))))))
+
+    
 
 
+    
 
 (defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
@@ -252,7 +250,7 @@
      ;;          :padding-right "2.5rem"}}
 
      [:div {:style {:height "2.5rem"}} " "]
-     [create-project-field (r/cursor project-details-atom [:name]) "Name" ;; "NewProject_11-25-25"
+     [create-project-field (r/cursor project-details-atom [:title]) "Name" ;; "NewProject_11-25-25"
       "MyCoolProject"
       "(Defaults to today’s date- you can change this later)"
       ]
