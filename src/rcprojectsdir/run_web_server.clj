@@ -1,245 +1,16 @@
 (ns rcprojectsdir.run-web-server
   (:require
    [clojure.data.json :as json]
+   [clojure.java.io :as io]
    [clojure.java.jdbc :as jdbc]
    [clojure.string :as str]
    [compojure.core :refer [defroutes GET POST]]
    [easyreagentserver.core :as er-server]
-   [environ.core :refer [env]]
-   [hiccup.page :refer [html5 include-css include-js]]
    [libpython-clj2.python :as py]
-   [libpython-clj2.require :refer [require-python]]
-   [clojure.java.io :as io]
+   [rcprojectsdir.database :as database :refer [db-spec]]
+   [rcprojectsdir.get-main-page :as get-main-page]
+   [rcprojectsdir.oauth :as oauth]
    [ring.util.response :as response]))
-
-(require-python '[requests_oauthlib :refer [OAuth2Session]])
-(require-python 'os)
-(require-python '[json :as py-json])
-
-
-(def recurse-auth-url "https://www.recurse.com/oauth/authorize")
-(def recurse-token-url "https://www.recurse.com/oauth/token")
-(def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
-
-
-(def db-spec
-  {:dbtype "postgresql"
-   :dbname (env :postgres-db "rcprojectsdir")
-   :host (env :postgres-host "localhost")
-   :port (env :postgres-port 5432)
-   :user (env :postgres-user "myuser")
-   :password (env :postgres-password "mypass")})
-
-(comment 
-(jdbc/execute!
- db-spec
- ["CREATE TABLE IF NOT EXISTS test_table (
-    id SERIAL PRIMARY KEY,
-    description TEXT NOT NULL)"]))
-
-(defn migrate-v1 []
-  (jdbc/execute!
-    db-spec
-    ["CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-      
-      CREATE TABLE IF NOT EXISTS projects (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT NOT NULL,
-        author INTEGER NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-        FOREIGN KEY (author) REFERENCES users(id)
-      );
-
-      CREATE TABLE IF NOT EXISTS project_updates (
-        id SERIAL PRIMARY KEY,
-        project_id INTEGER NOT NULL,
-        update_text TEXT NOT NULL,
-        author INTEGER NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-        FOREIGN KEY (project_id) REFERENCES projects(id),
-        FOREIGN KEY (author) REFERENCES users(id)
-      );"]))
-
-(defn migrate-v2 []
-  (jdbc/execute!
-   db-spec 
-   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS recurse_id INTEGER UNIQUE;"]))
-
-(defn migrate-v3 []
-  (jdbc/execute! db-spec
-    ["DROP MATERIALIZED VIEW IF EXISTS project_search CASCADE"])
-  (jdbc/execute!
-   db-spec
-   ["CREATE MATERIALIZED VIEW project_search AS
-SELECT 
-  p.id,
-  p.name,
-  p.description,
-  a.name AS author_name,
-  setweight(to_tsvector('simple', COALESCE(p.name, '')), 'A') ||
-  setweight(to_tsvector('simple', COALESCE(a.name, '')), 'B') ||
-  setweight(to_tsvector('simple', COALESCE(p.description, '')), 'C') AS search_vector
-FROM projects p
-LEFT JOIN users a ON p.author = a.id;
-
-CREATE INDEX idx_project_search_fts ON project_search USING GIN (search_vector);
-
--- Refresh when data changes:
-REFRESH MATERIALIZED VIEW project_search;
-
--- Or refresh concurrently (non-blocking, requires unique index):
-CREATE UNIQUE INDEX idx_project_search_id ON project_search (id);
-REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
-"]))
-
-
-
-#_(do (jdbc/execute!
-       db-spec
-       ["ALTER TABLE users DROP COLUMN is_new_user"])
-      (migrate-v4))
-
-(defn migrate-v4 []
-  (jdbc/execute!
-   db-spec
-   ["ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_user BOOLEAN NOT NULL DEFAULT TRUE"]))
-
-
-
-(defn migrate-v5 []
-  (jdbc/execute!
-   db-spec
-   ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_links TEXT[] DEFAULT '{}';"])
-
-  
-  (jdbc/execute!
-   db-spec
-   ["CREATE TABLE IF NOT EXISTS project_images (
-      id SERIAL PRIMARY KEY,
-      project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
-      file_path TEXT NOT NULL
-    )"]))
-
-#_(jdbc/query
-   db-spec
-   ["SELECT * FROM projects"])
-
-
-#_(jdbc/query
-   db-spec
-   ["SELECT * FROM users"])
-
-
-#_(jdbc/execute!
- db-spec
- ["INSERT INTO  test_table (id, description) VALUES (?, ?)" 12 "hi"])
-
-#_(jdbc/query
- db-spec
- ["SELECT * FROM test_table"])
-
-#_(jdbc/execute!
-   db-spec
-   ["INSERT INTO users (id, name) VALUES (?, ?)" 2 "test"])
-
-#_(jdbc/execute!
-   db-spec
-   ["DROP TABLE  project_updates CASCADE"])
-#_(jdbc/execute!
-   db-spec
-   ["DROP TABLE  projects CASCADE"])
-#_(jdbc/execute!
-   db-spec
-   ["DROP TABLE  project_search CASCADE"])
-;; (create-user-if-not-exists {:name "test" :id 123})
-
-
-
-(defn redirect-to-oauth []
-  (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
-    (response/redirect (first (py/py. oauth-obj authorization_url
-                                recurse-auth-url)))))
-
-(defn create-user-if-not-exists [{:keys [name id] :as recurse-info}]
-  (first (jdbc/query
-   db-spec
-   ["INSERT INTO users (name, recurse_id)
-     VALUES (?, ?)
-     ON CONFLICT (recurse_id)
-     DO UPDATE SET recurse_id = EXCLUDED.recurse_id
-     RETURNING *"
-    name
-    id])))
-                     
-
-
-(defn handle-redirect-response [params]
-  (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
-                          (get-in params [:headers "host"]) "/" (get params :uri) "?" (get params :query-string))
-        authorizer (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
-    (py/py. authorizer fetch_token
-            recurse-token-url
-            :client_secret (:recurse-client-secret env)
-            :authorization_response response-url)
-    (let [user-info (py/py. authorizer get "https://www.recurse.com/api/v1/profiles/me")
-          parsed-response (medley.core/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
-      (if (not (and (:name parsed-response)
-                    (:id parsed-response)))
-        {:status 500
-         :headers {"Content-Type" "text/plain"}
-         :body "Failed to Fetch Project"}
-        (do
-          (let [db-result (create-user-if-not-exists parsed-response)]
-            (if (not db-result)
-              {:status 500
-               :headers {"Content-Type" "text/plain"}
-               :body "Failed to fetch user in database"}
-              (assoc
-               (response/redirect "/")
-               :session
-               {:name (:name parsed-response)
-                :db_id (:id db-result)
-                :recurse_id (:id parsed-response)}))))))))
-
-
-
-(defn head []
-  [:head
-   [:meta {:charset "utf-8"}]
-   [:meta {:name "viewport"
-           :content "width=device-width, initial-scale=1"}]
-   (str "<script>mode=" (json/write-str @er-server/MODE) "</script>")
-   (include-css (str "/resources/global_output.css?v=" (rand-int 100000)))])
-
-(defn is-new-user [params]
-  (:is_new_user (first (jdbc/query db-spec ["SELECT is_new_user FROM users WHERE id = ?" (:db_id (:session params))]))))
-
-
-;; now I need to pass the user session parameter to landing-page
-(defn loading-page [params]
-  (def m1 params)
-  (html5
-   (head)
-   [:body {:class "body-container"}
-    [:div {:id "main-app"}]
-    (str "
-
-<link href=\"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap\" rel=\"stylesheet\">")
-    (include-js "/resources/reload_css.js")
-    (include-js "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js")
-    (str "<script>is_new_user=" (is-new-user params) "</script>")
-    (if (= @er-server/MODE :dev)
-      (include-js  (str "/out/main.js?v=" (rand-int 100000)))
-      (include-js "/prod_js/main.js"))]))
-
-(defn get-main-page [params]
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (loading-page params)})
 
 
 (defn new-user-form-completed [params]
@@ -468,18 +239,16 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
       (handler request)
       (response/redirect "/redirect"))))
 
-(defroutes public-routes
-  (GET "/redirect" params (redirect-to-oauth))
-  (GET "/handleRedirectResponse" params (handle-redirect-response params)))
+
 
 
 (defroutes private-routes
   ;; now I think this should return is_new_user as part of the js response
   ;; so that it happens clean on first load with no flashbang
-  (GET "/" params (get-main-page params))
+  (GET "/" params (get-main-page/get-main-page params))
   (GET "/currUserInfo" params (get-curr-user-info params))
   ;; use frontend routing for requests
-  (GET "/reviewProjectPage" params (get-main-page params))
+  (GET "/reviewProjectPage" params (get-main-page/get-main-page params))
   (GET "/getProjectDetails" params (get-project-details params))
   (POST "/editProject" params (edit-project params))
   (GET "/getUsersProjects" params (get-users-projects params))  
@@ -495,7 +264,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
 
 (def all-routes
   (compojure.core/routes
-   public-routes
+   oauth/public-routes
    (compojure.core/wrap-routes
     private-routes
     login-redirect)))
@@ -505,11 +274,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (when input-mode (reset! er-server/MODE input-mode))
   (when (= input-mode :dev)
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
-  (migrate-v1)
-  (migrate-v2)
-  (migrate-v3)
-  (migrate-v4)
-  (migrate-v5)
+  (database/database-migrations)
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001

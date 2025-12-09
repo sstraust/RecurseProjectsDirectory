@@ -100,11 +100,12 @@
         [choose-menu-button  "My Projects" ::users-projects selected-menu*]]
        [:v-box.flex-grow.rounded-xl
         {:style {:padding-top "1.875rem"
+                 :padding-bottom "1.875rem"
                  :background-color "#F0F0F0"}}
        (cond
          (= @selected-menu* ::recent-activity)
          [:v-box
-          {:style {:gap "3.875rem"}}
+          {:style {:gap "2rem"}}
           (for [update @updates-list*]
             [display-update update])]
          (= @selected-menu* ::all-projects)
