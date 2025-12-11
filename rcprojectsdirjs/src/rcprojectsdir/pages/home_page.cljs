@@ -164,13 +164,13 @@
                   :class "!max-w-none"} desc*]
    [:h-box.flex.items-start.justify-between
     {:style {:margin-top "0.9375rem"}}
-    [:h-box.items-center
-     [:div "+"]
-    [:div.font-medium.underline
-     {:style {:height "1.4375rem"
-              :padding-left "0.9375rem"
-              :font-size "1.25rem"}}
-     "Add additional info"]]
+    ;; [:h-box.items-center
+    ;;  [:div "+"]
+    ;; [:div.font-medium.underline
+    ;;  {:style {:height "1.4375rem"
+    ;;           :padding-left "0.9375rem"
+    ;;           :font-size "1.25rem"}}
+    ;;  "Add additional info"]]
     [:div
       [:button.btn.btn-primary
         {:type "submit"}
