@@ -26,7 +26,11 @@
   [request]
   (let [user-id  (:db_id (:session request))
         users-projects (jdbc/query db-spec
-                             ["SELECT id, name, description, author, created_at FROM projects WHERE author = ?" user-id])]
+                                   ["SELECT p.id, p.name, p.description, p.author, p.created_at, u.name AS author_name FROM projects p
+LEFT OUTER JOIN users u
+ON p.author = u.id
+ WHERE author = ?
+" user-id])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:users-projects users-projects})}))
@@ -36,7 +40,10 @@
   "HTTP handler: return all projects"
   [_request]
   (let [all-projects (jdbc/query db-spec
-                             ["SELECT id, name, description, author, created_at FROM projects"])]
+                                 ["
+SELECT p.id, p.name, p.description, p.author, p.created_at, u.name AS author_name FROM projects p
+LEFT OUTER JOIN users u
+ON p.author = u.id"])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:all-projects all-projects})}))
