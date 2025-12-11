@@ -42,8 +42,6 @@
           (reset! selected-project-id* (:id (first users-projects))))))
 )
 
-;; (first @a4)
-
 
 
 (defn create-project-fn [selected-project-id* users-projects* desc*]
@@ -213,4 +211,3 @@
     [update-project]
     [updates-feed/updates-feed]
     ]])
-;; (js/alert "hi!")

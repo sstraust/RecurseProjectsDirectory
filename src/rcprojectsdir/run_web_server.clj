@@ -30,6 +30,7 @@
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:users-projects users-projects})}))
+;; 
 
 (defn get-all-projects
   "HTTP handler: return all projects"
