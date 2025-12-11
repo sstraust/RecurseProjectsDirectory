@@ -30,7 +30,6 @@
      {:style {:margin-top "1.5rem"
               :margin-left "1.875rem"}}
      [:h2.font-bold
-      
       {:style {:font-size "2.1875rem"}}
       name]
      [:h-box
@@ -58,10 +57,11 @@
     [:div.self-end.font-bold.underline
      {:style {:padding-bottom "1.875rem"
               :padding-right "1.875rem"
-              :font-size "1.5rem"
-              }}
-     "View →"]]
-    ])
+              :font-size "1.5rem"}
+      :on-click #(set! (.-href (.-location js/window))
+                       (str "/viewProjectPage?project=" id))}
+     "View →"]]])
+
 
 
 (defn my-projects []
