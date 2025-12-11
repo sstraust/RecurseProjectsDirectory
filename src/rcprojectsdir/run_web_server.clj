@@ -26,16 +26,17 @@
   [request]
   (let [user-id  (:db_id (:session request))
         users-projects (jdbc/query db-spec
-                             ["SELECT name, description, author, created_at FROM projects WHERE author = ?" user-id])]
+                             ["SELECT id, name, description, author, created_at FROM projects WHERE author = ?" user-id])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:users-projects users-projects})}))
+;; 
 
 (defn get-all-projects
   "HTTP handler: return all projects"
   [_request]
   (let [all-projects (jdbc/query db-spec
-                             ["SELECT name, description, author, created_at FROM projects"])]
+                             ["SELECT id, name, description, author, created_at FROM projects"])]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/write-str {:all-projects all-projects})}))
@@ -176,6 +177,7 @@
         {:status 500
          :headers {"Content-Type" "text/plain"}
          :body "Failed to insert"}))))
+
 
 (defn get-updates-list [params]
   (er-server/json-response
