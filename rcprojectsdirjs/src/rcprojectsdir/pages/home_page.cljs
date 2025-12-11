@@ -42,6 +42,8 @@
           (reset! selected-project-id* (:id (first users-projects))))))
 )
 
+;; (first @a4)
+
 
 
 (defn create-project-fn [selected-project-id* users-projects* desc*]
@@ -178,11 +180,13 @@
    ]]
   )
 
+
+
 (defn update-project []
   (let [desc*         (r/atom "")
         selected-project-id* (r/atom -1)
         users-projects*     (r/atom [])]
-
+    
     (get-users-projects users-projects* selected-project-id*)
     (fn []
       [:v-box.items-start.w-full
@@ -209,3 +213,4 @@
     [update-project]
     [updates-feed/updates-feed]
     ]])
+;; (js/alert "hi!")

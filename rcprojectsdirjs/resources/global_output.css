@@ -837,18 +837,6 @@ html{
   outline-offset: 2px;
 }
 
-.card-body{
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  padding: var(--padding-card, 2rem);
-  gap: 0.5rem;
-}
-
-.card-body :where(p){
-  flex-grow: 1;
-}
-
 .card figure{
   display: flex;
   align-items: center;
@@ -2066,15 +2054,6 @@ html{
   padding: 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-}
-
-.card-title{
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
 }
 
 .card.image-full :where(figure){
@@ -3316,26 +3295,6 @@ details.collapse summary::-webkit-details-marker{
   border-bottom-right-radius: var(--rounded-btn, 0.5rem);
 }
 
-.card-compact .card-body{
-  padding: 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-.card-compact .card-title{
-  margin-bottom: 0.25rem;
-}
-
-.card-normal .card-body{
-  padding: var(--padding-card, 2rem);
-  font-size: 1rem;
-  line-height: 1.5rem;
-}
-
-.card-normal .card-title{
-  margin-bottom: 0.75rem;
-}
-
 .join.join-vertical > :where(*:not(:first-child)){
   margin-left: 0px;
   margin-right: 0px;
@@ -3506,10 +3465,6 @@ details.collapse summary::-webkit-details-marker{
 
 .mb-2{
   margin-bottom: 0.5rem;
-}
-
-.mb-4{
-  margin-bottom: 1rem;
 }
 
 .ml-8{
@@ -3882,12 +3837,6 @@ details.collapse summary::-webkit-details-marker{
 .shadow-lg{
   --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-
-.shadow-md{
-  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
