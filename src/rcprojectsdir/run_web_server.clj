@@ -82,7 +82,6 @@
   (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
 
 (defn create-project [request]
-  (def z3 request)
   (let [project-description (get-in request [:params :project-description])
         project-name        (get-in request [:params :project-name])
         links               (vec->pg-array
@@ -118,8 +117,6 @@
         {:status  500
         :headers  {"Content-Type" "text/plain"}
          :body    "Failed to create project"}))))
-;; (:params z3)
-
 
 
 ;; use keyword destructuring to access params
@@ -181,14 +178,6 @@
         {:status 500
          :headers {"Content-Type" "text/plain"}
          :body "Failed to insert"}))))
-
-(comment
-
-  (:params zz)
-  {:update-contents "testhi11", :project-id ""}
-
-  )
-
 
 
 (defn get-updates-list [params]
