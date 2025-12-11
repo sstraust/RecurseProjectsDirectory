@@ -45,9 +45,9 @@
        author]]]
     [:div.badge.bg-badge-primary.font-semibold.px-5
      {:style {:height "2.688rem"
-              :background-color "#86CEFF"
+              :background-color "#8BDD7E"
               :font-size "1.25rem"}}
-     "Updated Today"]]
+     "Created"]]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"
@@ -55,12 +55,13 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
      description]
-    [:div.self-end.font-bold.underline
-     {:style {:padding-bottom "1.875rem"
-              :padding-right "1.875rem"
-              :font-size "1.5rem"
-              }}
-     "View →"]]
+    ;; [:div.self-end.font-bold.underline
+    ;;  {:style {:padding-bottom "1.875rem"
+    ;;           :padding-right "1.875rem"
+    ;;           :font-size "1.5rem"
+    ;;           }}
+    ;;  "View →"]
+     ]
     ])
 
 

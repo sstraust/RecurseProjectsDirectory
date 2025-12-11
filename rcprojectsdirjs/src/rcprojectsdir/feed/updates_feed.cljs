@@ -42,7 +42,7 @@
      {:style {:height "2.688rem"
               :background-color "#86CEFF"
               :font-size "1.25rem"}}
-     "Updated Today"]]
+     "Updated"]]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"
@@ -50,12 +50,13 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
      (:update_text update)]
-    [:div.self-end.font-bold.underline
-     {:style {:padding-bottom "1.875rem"
-              :padding-right "1.875rem"
-              :font-size "1.5rem"
-              }}
-     "View →"]]
+    ;; [:div.self-end.font-bold.underline
+    ;;  {:style {:padding-bottom "1.875rem"
+    ;;           :padding-right "1.875rem"
+    ;;           :font-size "1.5rem"
+    ;;           }}
+    ;;  "View →"]
+     ]
     ])
 
 
