@@ -22,9 +22,7 @@ LEFT OUTER JOIN users u
 ON p.author = u.id
  WHERE author = ?
 " user-id])]
-    {:status  200
-     :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:users-projects users-projects})}))
+    (er-server/json-response {:users-projects users-projects})))
 
 
 (defn get-all-projects
@@ -35,9 +33,7 @@ ON p.author = u.id
 SELECT p.id, p.name, p.description, p.author, p.created_at, u.name AS author_name FROM projects p
 LEFT OUTER JOIN users u
 ON p.author = u.id"])]
-    {:status  200
-     :headers {"Content-Type" "application/json"}
-     :body    (json/write-str {:all-projects all-projects})}))
+    (er-server/json-response {:all-projects all-projects})))
 
 
 
@@ -60,6 +56,9 @@ ON p.author = u.id"])]
     (save-image-to-project project-id image)))
 
 
+(defn vec->pg-array [conn type-name coll]
+  (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
+
 (defn create-project!
   "Create a new project row for the given user id."
   [user-id project-name description links images]
@@ -68,54 +67,32 @@ ON p.author = u.id"])]
                        :projects
                        {:name project-name
                         :description description
-                        :project_links links
+                        :project_links (vec->pg-array db-spec "TEXT" links)
                         :author user-id})]
     (save-project-images (:id (first insert-result)) images)
     insert-result))
 
 
-            
-
-(defn vec->pg-array [conn type-name coll]
-  (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
-
-(defn create-project [request]
-  (let [project-description (get-in request [:params :project-description])
-        project-name        (get-in request [:params :project-name])
-        links               (vec->pg-array
-                             db-spec "TEXT"
-                             (rest (get-in request [:params :project-links])))
+(defn create-project [{{:keys [project-description project-name project-links images]} :params :as request}]
+  (let [links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
-        images              (if (map? (:images (:params request)))
-                              [(:images (:params request))]
-                              (:images (:params request)))]
+        images              (if (map? images) [images] images)] ; workaorund for a bug where array args are automatically coalesced
     (try
       (if (and (string? project-description)
-                (string? project-name)
-                (not (clojure.string/blank? project-name)))
+               (string? project-name)
+               (not (clojure.string/blank? project-name)))
         (if-let [result (first (create-project! user-id project-name project-description links images))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
                          :update-contents (str "New project created: " project-description)}})
               (oauth/mark-new-user-form-as-completed request)
-              {:status  200
-               :headers {"Content-Type" "application/json"}
-               :body    (json/write-str {:ok true
-                                         :project-id (:id result)})})
-          (do (println "failed to create project")
-          {:status  500
-           :headers  {"Content-Type" "text/plain"}
-           :body    "failed to create project"}))
-        (do
-          (println "invalid project name")
-          {:status  500
-        :headers  {"Content-Type" "text/plain"}
-         :body    "invalid project name"}))
+              (er-server/json-response {:ok true
+                                        :project-id (:id result)}))
+          (er-server/failure-response "failed to create project"))
+        (er-server/failure-response "invalid project name"))
       (catch Exception e
         (println e)
-        {:status  500
-        :headers  {"Content-Type" "text/plain"}
-         :body    "Failed to create project"}))))
+        (er-server/failure-response "Failed to create project")))))
 
 
 ;; use keyword destructuring to access params
@@ -125,13 +102,9 @@ ON p.author = u.id"])]
                        db-spec
                        ["SELECT name, description, author FROM projects WHERE id = ? LIMIT 1"
                         (Integer/parseInt project-id)]))]
-    (if query-result 
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (json/write-str query-result)}
-      {:status 500
-       :headers {"Content-Type" "text/plain"}
-       :body "Failed to Fetch Project"})))
+    (if query-result
+      (er-server/json-response query-result)
+      (er-server/failure-response "Failed to Fetch Project"))))
 
 
 
@@ -148,13 +121,8 @@ ON p.author = u.id"])]
                       (:description updates)
                       (Integer/parseInt project-id)])]
     (if edit-result
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (json/write-str (first edit-result))}
-      {:status 500
-       :headers {"Content-Type" "text/plain"}
-       :body "Failed to Edit Project"})))
-
+      (er-server/json-response (first edit-result))
+      (er-server/failure-response "Failed to Edit Project"))))
 
 
 

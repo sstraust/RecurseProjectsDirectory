@@ -10,22 +10,16 @@
 (defn create-update [{{:keys [project-id update-contents]} :params :as params}]
   (if-not (first (jdbc/query db-spec ["SELECT 1 FROM projects WHERE author = ? AND id = ? LIMIT 1"
                                       (:db_id (:session params)) (Integer/parseInt project-id)]))
-    {:status 500
-     :headers {"Content-Type" "text/plain"}
-     :body "Failed to find this project owned by user"}
+    (er-server/failure-response "Failed to find this project owned by user")
     (if-let [db-result (jdbc/insert!
                         db-spec
                         :project_updates
                         {:update_text (str update-contents)
                          :project_id (Integer/parseInt project-id)
                          :author (:db_id (:session params))})]
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body    (json/write-str {:ok true
-                                 :update-id (:id db-result)})}
-      {:status 500
-       :headers {"Content-Type" "text/plain"}
-       :body "Failed to insert"})))
+      (er-server/json-response {:ok true
+                                :update-id (:id db-result)})
+      (er-server/failure-response "Failed to insert"))))
 
 
 (defn get-updates-list [params]
