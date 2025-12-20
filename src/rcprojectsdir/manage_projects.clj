@@ -84,7 +84,8 @@ ON p.author = u.id"])]
         (if-let [result (first (create-project! user-id project-name project-description links images))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
-                         :update-contents (str "New project created: " project-description)}})
+                         :update-contents (str "New project created: " project-description)}
+                :session (:session request)})
               (oauth/mark-new-user-form-as-completed request)
               (er-server/json-response {:ok true
                                         :project-id (:id result)}))
