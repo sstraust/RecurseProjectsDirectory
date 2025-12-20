@@ -3,6 +3,7 @@
    [clojure.data.json :as json]
    [clojure.test :refer :all]
    [rcprojectsdir.fixtures.setup-postgres-fixture :as setup-postgres-fixture]
+   [rcprojectsdir.manage-project-updates :as manage-project-updates]
    [rcprojectsdir.manage-projects :as manage-projects]
    [rcprojectsdir.oauth :as oauth]))
 
@@ -45,5 +46,75 @@
               :author (:id oauth-user)}
              (select-keys (json/read-str (:body get-details-result) :key-fn keyword)
                           [:name :description :author]))))))
-     
 
+
+(deftest get-all-projects-test
+  (testing
+      "Test that we can create a project, and it will show up in get-all-projects"
+    (let [oauth-user (oauth/create-user-if-not-exists {:name "user2"
+                                                       :id 3213})
+          result 
+          (manage-projects/create-project
+           {:params {:project-description "yes this project is fantastic"
+                     :project-name "Fun Project"
+                     :project-links ["https://www.itsthebest.com"]
+                     :images nil}
+            :session {:db_id (:id oauth-user)}})
+          get-all-projects-result (manage-projects/get-all-projects {})
+          projects (:all-projects (json/read-str (:body get-all-projects-result) :key-fn keyword))]
+      (is (= 200 (:status get-all-projects-result)))
+      (is (= {:id 1
+              :name "Fun Project"
+              :description "yes this project is fantastic"
+              :author (:id oauth-user)
+              :author_name "user2"}
+             (select-keys (first projects)
+                          [:id :name :description :author :author_name])))
+      (is (= 1 (count projects)))))
+  (testing "Test that we can create a project, and it will show up in get-users-projects"
+    (let [oauth-user (oauth/create-user-if-not-exists {:name "user3"
+                                                       :id 16161})
+          result 
+          (manage-projects/create-project
+           {:params {:project-description "this is another cool project"
+                     :project-name "Just My Project"
+                     :project-links ["https://www.itsthebest.com"]
+                     :images nil}
+            :session {:db_id (:id oauth-user)}})
+          get-users-projects-result (manage-projects/get-users-projects
+                                   {:session {:db_id (:id oauth-user)}})
+          projects (:users-projects (json/read-str (:body get-users-projects-result) :key-fn keyword))]
+      (is (= 200 (:status get-users-projects-result)))
+      (is (= {:id 2
+              :name "Just My Project"
+              :description "this is another cool project"
+              :author (:id oauth-user)
+              :author_name "user3"}
+             (select-keys (first projects)
+                          [:id :name :description :author :author_name])))
+      (is (= 1 (count projects)))))
+  (testing "Test that get-all-projects still returns both user's projects"
+    (let [get-all-projects-result (manage-projects/get-all-projects {})
+          projects (:all-projects (json/read-str (:body get-all-projects-result) :key-fn keyword))]
+      (is (= 200 (:status get-all-projects-result)))
+      (is (= 2 (count projects))))))
+
+
+(deftest create-project-creates-update-test
+  (testing
+      "Test that creating a new project also creates a project update for that project"
+    (let [oauth-user (oauth/create-user-if-not-exists {:name "user3"
+                                                       :id 16161})
+          result 
+          (manage-projects/create-project
+           {:params {:project-description "this is another cool project"
+                     :project-name "Just My Project"
+                     :project-links ["https://www.itsthebest.com"]
+                     :images nil}
+            :session {:db_id (:id oauth-user)}})
+          updates (:updates-list
+                   (json/read-str
+                    (:body (manage-project-updates/get-updates-list {}))
+                    :key-fn keyword))]
+      (is (= 1 (count updates)))
+      (is (= (:update_text (first updates)) "New project created: this is another cool project")))))
