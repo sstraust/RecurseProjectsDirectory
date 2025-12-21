@@ -114,7 +114,7 @@
             :session {:db_id (:id oauth-user)}})
           updates (:updates-list
                    (json/read-str
-                    (:body (manage-project-updates/get-updates-list {}))
+                    (:body (manage-project-updates/get-updates-list {:params {}}))
                     :key-fn keyword))]
       (is (= 1 (count updates)))
       (is (= (:update_text (first updates)) "New project created: this is another cool project")))))

@@ -1,0 +1,6 @@
+{:linters {:unresolved-symbol {:exclude [(malli.core/=>)]},
+           :type-mismatch {:namespaces {rcprojectsdir.manage-project-updates {create-update {:arities {1 {:args [{:op :keys,
+                                                                                                                  :req {:params {:op :keys,
+                                                                                                                                 :req {:project-id :string,
+                                                                                                                                       :update-contents :string}}}}],
+                                                                                                          :ret :any}}}}}}}}

@@ -8,16 +8,17 @@
          compojure/compojure {:mvn/version "1.4.0"}
          me.raynes/conch {:mvn/version "0.8.0"}
          org.clojure/data.json {:mvn/version "2.4.0"}
-         ;; io.github.sstraust/easyreagent {:local/root "../easyreagentpublic/server"}
-         io.github.sstraust/easyreagent {:git/url "https://github.com/sstraust/easyreagent.git"
-                                         :git/sha "451e0c75715277d8f74dc2de8ae9fbbd4c89f71d"
-                                         :deps/root "server"}
+         io.github.sstraust/easyreagent {:local/root "../easyreagentpublic/server"}
+         ;; io.github.sstraust/easyreagent {:git/url "https://github.com/sstraust/easyreagent.git"
+         ;;                                 :git/sha "451e0c75715277d8f74dc2de8ae9fbbd4c89f71d"
+         ;;                                 :deps/root "server"}
          clj-time/clj-time {:mvn/version "0.15.2"}
          hiccup/hiccup {:mvn/version "1.0.5"}
          org.clojure/java.jdbc {:mvn/version "0.7.12"}
          org.postgresql/postgresql {:mvn/version "42.7.3"}
          clj-python/libpython-clj {:mvn/version "2.025"}
          dev.weavejester/medley {:mvn/version "1.9.0"}
+         metosin/malli {:mvn/version "0.17.0"}
 
 
          de.flapdoodle.embed/de.flapdoodle.embed.mongo 
