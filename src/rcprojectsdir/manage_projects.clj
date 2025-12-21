@@ -1,11 +1,11 @@
 (ns rcprojectsdir.manage-projects
   (:require
-   [clojure.data.json :as json]
    [clojure.java.io :as io]
    [clojure.java.jdbc :as jdbc]
    [clojure.string :as str]
    [compojure.core :refer [defroutes GET POST]]
    [easyreagentserver.core :as er-server]
+   [malli.instrument :as mi]
    [rcprojectsdir.database :as database :refer [db-spec]]
    [rcprojectsdir.manage-project-updates :as manage-project-updates]
    [rcprojectsdir.oauth :as oauth]))
@@ -72,8 +72,19 @@ ON p.author = u.id"])]
     (save-project-images (:id (first insert-result)) images)
     insert-result))
 
-
-(defn create-project [{{:keys [project-description project-name project-links images]} :params :as request}]
+(def ImageInput [:map
+                 [:filename :string]
+                 [:tempfile [:fn {:error/message "expected java.io.File"}
+                               #(instance? java.io.File %)]]])
+(defn create-project
+  ;; {:malli/schema (er-server/param-schema {:project-description :string
+  ;;                                         :project-name :string}
+  ;;                                        :optional 
+  ;;                                         {:project-links [:sequential :string]
+  ;;                                         :images [:or ImageInput [:sequential ImageInput]]})}
+  [{{:keys [project-description project-name project-links images]} :params :as request}]
+  (println "test")
+  (def zz request)
   (let [links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
         images              (if (map? images) [images] images)] ; workaorund for a bug where array args are automatically coalesced
@@ -96,8 +107,11 @@ ON p.author = u.id"])]
         (er-server/failure-response "Failed to create project")))))
 
 
+
 ;; use keyword destructuring to access params
-(defn get-project-details [{{:keys [project-id]} :params}]
+(defn get-project-details
+  {:malli/schema (er-server/param-schema {:project-id :string})}
+  [{{:keys [project-id]} :params}]
   (let [query-result (first
                       (jdbc/query
                        db-spec
@@ -109,7 +123,9 @@ ON p.author = u.id"])]
 
 
 
-(defn edit-project [{{:keys [project-id updates]} :params}]
+;; TODO edit this to add malli schema
+(defn edit-project
+  [{{:keys [project-id updates]} :params}]
   (let [edit-result (jdbc/execute!
                      db-spec
                      ["UPDATE projects
@@ -143,7 +159,9 @@ ON p.author = u.id"])]
 
 ;; TODO add malli validation so we can ensure that this matches the same
 ;; schema as getallprojects
-(defn search-projects [{{:keys [search-str]} :params}]
+(defn search-projects
+  {:malli/schema (er-server/param-schema {:search-str :string})}
+  [{{:keys [search-str]} :params}]
   (er-server/json-response
    {:all-projects 
    (let [search-query (str-to-search-query search-str)]
@@ -166,3 +184,8 @@ ON p.author = u.id"])]
   (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
   (POST "/searchProjects" params (search-projects params)))
+
+
+;; (mi/collect! {:ns ['rcprojectsdir.manage-projects]})
+;; (mi/instrument!)
+

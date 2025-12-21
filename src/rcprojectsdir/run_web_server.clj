@@ -3,12 +3,12 @@
    [compojure.core :refer [defroutes GET]]
    [easyreagentserver.core :as er-server]
    [libpython-clj2.python :as py]
+   [malli.instrument :as mi]
    [rcprojectsdir.database :as database]
    [rcprojectsdir.get-main-page :as get-main-page]
    [rcprojectsdir.manage-project-updates :as manage-project-updates]
    [rcprojectsdir.manage-projects :as manage-projects]
    [rcprojectsdir.oauth :as oauth]))
-
 
 
 
@@ -54,5 +54,7 @@
 
 
 ;; (jdbc/query db-spec ["SELECT * FROM updates"])({:id 1, :update_text "test", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:07.041901000-00:00"} {:id 2, :update_text "test update", :project_id 22, :author 17, :created_at #inst "2025-11-25T19:00:42.687783000-00:00"} {:id 3, :update_text "test", :project_id 34, :author 17, :created_at #inst "2025-11-25T19:14:25.544164000-00:00"} {:id 4, :update_text "my test update!!", :project_id 26, :author 17, :created_at #inst "2025-11-25T19:18:07.494845000-00:00"})
+
+
 
 
