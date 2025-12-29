@@ -64,7 +64,7 @@
     subtext]
    ])
 
-(defn create-project-field-link [content* label-name placeholder subtext]
+(defn create-project-field-link [content* is-it-live* label-name placeholder subtext]
   [:<>
    [:label.font-semibold
     {:style {:font-size "1.25rem"
@@ -86,6 +86,8 @@
                       :color "#353535"}}
       "Is it Live?"]
      [:input.checkbox {:type "checkbox"
+                       :checked @is-it-live*
+                       :on-change #(reset! is-it-live* (-> % .-target .-checked))
                        :style {:margin-left "0.5625rem"}
                        }]]]
    
@@ -199,13 +201,15 @@
   (let [fd (js/FormData.)]
     (.append fd "project-name" (:title @project-details*))
     (.append fd "project-description" (:description @project-details*))
+    (.append fd "is-live" (:is-live @project-details*))
+    (.append fd "project-images" (doseq [img (:image-data (:images @project-details*))]
+                                   (.append fd "images" img (.-name img))))
     (.append fd "project-links" (concat
                                  ;; add unused first element as workaround for automatic coalescing
                                  [:links]
                                  (when (not (str/blank? (:link @project-details*)))
                                    [(:link @project-details*)])))
-    (.append fd "project-images" (doseq [img (:image-data (:images @project-details*))]
-                                   (.append fd "images" img (.-name img))))
+    
 
     (-> (js/fetch "/newProject"
                   #js {:method "POST"
@@ -251,7 +255,10 @@
      [create-project-field-description (r/cursor project-details-atom [:description]) "Description" "Starting to work on a new app..."
       "(Can just be one line)"]
      [:div {:style {:height "1.875rem"}}  " "]
-     [create-project-field-link (r/cursor project-details-atom [:link]) "Link" "github.com/name/thisproject"
+     [create-project-field-link
+      (r/cursor project-details-atom [:link])
+      (r/cursor project-details-atom [:is-live])
+      "Link" "github.com/name/thisproject"
       "(Optional)"]
      [:div {:style {:height "1.875rem"}}  " "]
      [upload-image (r/cursor project-details-atom [:images])
