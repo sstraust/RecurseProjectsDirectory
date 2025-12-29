@@ -38,7 +38,6 @@ ON p.author = u.id"])]
     (er-server/json-response {:all-projects all-projects})))
 
 
-
 ;; manage images
 (def images-dir "resources/user_images/")
 (defn save-image-to-project
@@ -63,28 +62,31 @@ ON p.author = u.id"])]
 
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id project-name description links images]
+  [user-id project-name description links images is-live]
   (let [insert-result (jdbc/insert!
                        db-spec
                        :projects
                        {:name project-name
                         :description description
                         :project_links (vec->pg-array db-spec "TEXT" links)
-                        :author user-id})]
+                        :author user-id
+                        :is_live (or is-live false)})]
     (save-project-images (:id (first insert-result)) images)
     insert-result))
 
 
 ;; TODO add malli schema for this route
-(defn create-project [{{:keys [project-description project-name project-links images]} :params :as request}]
-  (let [links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
+(defn create-project [{{:keys [project-description project-name project-links images is-live]} :params :as request}]
+  (let [is-live             (if (= is-live "true") true false)
+        ;; TODO -- in testing this, I noticed an issue where the string value passed in the project-links request is not what I expect it to be
+        links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
         images              (if (map? images) [images] images)] ; workaorund for a bug where array args are automatically coalesced
     (try
       (if (and (string? project-description)
                (string? project-name)
                (not (clojure.string/blank? project-name)))
-        (if-let [result (first (create-project! user-id project-name project-description links images))]
+        (if-let [result (first (create-project! user-id project-name project-description links images is-live))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
                          :update-contents (str "New project created: " project-description)}
