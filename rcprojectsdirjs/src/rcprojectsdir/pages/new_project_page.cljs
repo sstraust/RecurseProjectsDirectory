@@ -222,7 +222,6 @@
 
 (defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
-    (def mm project-details-atom)
     (fn []
   [:div.w-screen.h-screen
    [:div.hero
