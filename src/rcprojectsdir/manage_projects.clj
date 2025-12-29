@@ -37,6 +37,21 @@ LEFT OUTER JOIN users u
 ON p.author = u.id"])]
     (er-server/json-response {:all-projects all-projects})))
 
+(comment
+
+  (jdbc/query db-spec
+              ["SELECT * FROM projects"])
+    
+
+  
+
+
+
+  
+  
+
+  )
+
 
 ;; manage images
 (def images-dir "resources/user_images/")
@@ -79,7 +94,7 @@ ON p.author = u.id"])]
 (defn create-project [{{:keys [project-description project-name project-links images is-live]} :params :as request}]
   (let [is-live             (if (= is-live "true") true false)
         ;; TODO -- in testing this, I noticed an issue where the string value passed in the project-links request is not what I expect it to be
-        links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
+        links               (if (string? project-links) [project-links] project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
         images              (if (map? images) [images] images)] ; workaorund for a bug where array args are automatically coalesced
     (try
@@ -95,11 +110,10 @@ ON p.author = u.id"])]
               (er-server/json-response {:ok true
                                         :project-id (:id result)}))
           (er-server/failure-response "failed to create project"))
-        (er-server/failure-response "invalid project name"))
+        (er-server/failure-response "invalid project name or description"))
       (catch Exception e
         (println e)
         (er-server/failure-response "Failed to create project")))))
-
 
 ;; use keyword destructuring to access params
 (defn get-project-details
