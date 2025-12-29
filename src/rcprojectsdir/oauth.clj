@@ -53,15 +53,11 @@
           parsed-response (medley/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
       (if (not (and (:name parsed-response)
                     (:id parsed-response)))
-        {:status 500
-         :headers {"Content-Type" "text/plain"}
-         :body "Failed to Fetch Project"}
+        (er-server/failure-response "Failed to Fetch Project")
         (do
           (let [db-result (create-user-if-not-exists parsed-response)]
             (if (not db-result)
-              {:status 500
-               :headers {"Content-Type" "text/plain"}
-               :body "Failed to fetch user in database"}
+              (er-server/failure-response "Failed to fetch user in database")
               (assoc
                (response/redirect "/")
                :session
@@ -71,9 +67,7 @@
 
 
 (defn get-curr-user-info [params]
-  {:status 200
-   :headers {"Content-Type" "application/json"}
-   :body (json/write-str (select-keys (:session params) [:id :name]))})
+  (er-server/json-response (select-keys (:session params) [:id :name])))
 
 (defn login-redirect [handler]
   (fn [request]
