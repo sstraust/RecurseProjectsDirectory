@@ -1,5 +1,6 @@
 (ns rcprojectsdir.manage-project-updates
   (:require
+   [malli.instrument :as mi]
    [clojure.data.json :as json]
    [clojure.java.jdbc :as jdbc]
    [easyreagentserver.core :as er-server]
@@ -7,7 +8,10 @@
    [compojure.core :refer [defroutes GET POST]]))
 
 
-(defn create-update [{{:keys [project-id update-contents]} :params :as params}]
+(defn create-update
+  {:malli/schema (er-server/param-schema {:project-id :string
+                                          :update-contents :string})}
+  [{{:keys [project-id update-contents]} :params :as params}]
   (if-not (first (jdbc/query db-spec ["SELECT 1 FROM projects WHERE author = ? AND id = ? LIMIT 1"
                                       (:db_id (:session params)) (Integer/parseInt project-id)]))
     (er-server/failure-response "Failed to find this project owned by user")
@@ -22,7 +26,9 @@
       (er-server/failure-response "Failed to insert"))))
 
 
-(defn get-updates-list [params]
+(defn get-updates-list
+  {:malli/schema (er-server/param-schema {})}
+  [params]
   (er-server/json-response
    {:updates-list (jdbc/query
               db-spec
@@ -39,4 +45,5 @@
   (GET "/getUpdatesList" params (get-updates-list params)))
 
 
-
+(mi/collect! {:ns ['rcprojectsdir.manage-project-updates]})
+(mi/instrument!)
