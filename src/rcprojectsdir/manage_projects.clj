@@ -37,21 +37,6 @@ LEFT OUTER JOIN users u
 ON p.author = u.id"])]
     (er-server/json-response {:all-projects all-projects})))
 
-(comment
-
-  (jdbc/query db-spec
-              ["SELECT * FROM projects"])
-    
-
-  
-
-
-
-  
-  
-
-  )
-
 
 ;; manage images
 (def images-dir "resources/user_images/")

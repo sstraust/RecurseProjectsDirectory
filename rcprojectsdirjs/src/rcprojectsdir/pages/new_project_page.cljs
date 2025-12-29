@@ -219,9 +219,7 @@
         (.then #(and % (.json %)))
         (.then #(and % (set! (.-href (.-location js/window)) "/")))
         (.catch #(js/alert  (str "Something went wrong creating your project: " %)))))))
-;; (.then (.json zz) (fn [x] (js/alert "hi!")))
 
-;; (not (str/blank? (:link @mm)))
 (defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
     (def mm project-details-atom)
