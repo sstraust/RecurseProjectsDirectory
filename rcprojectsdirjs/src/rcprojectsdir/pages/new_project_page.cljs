@@ -199,26 +199,27 @@
 (defn create-project-fn [project-details*]
   (fn [e] 
   (let [fd (js/FormData.)]
-    (.append fd "project-name" (:title @project-details*))
-    (.append fd "project-description" (:description @project-details*))
+    (when (:title @project-details*) (.append fd "project-name" (:title @project-details*)))
+    (when (:description @project-details*) (.append fd "project-description" (:description @project-details*)))
     (.append fd "is-live" (:is-live @project-details*))
-    (.append fd "project-images" (doseq [img (:image-data (:images @project-details*))]
-                                   (.append fd "images" img (.-name img))))
-    (.append fd "project-links" (concat
-                                 ;; add unused first element as workaround for automatic coalescing
-                                 [:links]
-                                 (when (not (str/blank? (:link @project-details*)))
-                                   [(:link @project-details*)])))
+    (doseq [img (:image-data (:images @project-details*))]
+                                   (.append fd "images" img (.-name img)))
+    (doseq [link (when (not (str/blank? (:link @project-details*)))
+                   [(:link @project-details*)])]
+      (.append fd "project-links" link))
     
 
     (-> (js/fetch "/newProject"
                   #js {:method "POST"
                        :body fd})
-        (.then #(.json %))
-        (.then #(set! (.-href (.-location js/window)) "/"))
-        (.catch #(js/alert  "Something went wrong creating your project."))))))
+        (.then (fn [response]
+                 (if (.-ok response)
+                   response
+                   (do (.then (.json response) #(js/alert (js/JSON.stringify %))) nil))))
+        (.then #(and % (.json %)))
+        (.then #(and % (set! (.-href (.-location js/window)) "/")))
+        (.catch #(js/alert  (str "Something went wrong creating your project: " %)))))))
 
-    
 (defn create-your-first-project [{:keys [title-text]}]
   (let [project-details-atom (r/atom {})]
     (fn []
