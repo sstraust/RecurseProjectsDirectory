@@ -245,18 +245,18 @@
      [:div {:style {:height "2.5rem"}} " "]
      [create-project-field (r/cursor project-details-atom [:title]) "Name" ;; "NewProject_11-25-25"
       "MyCoolProject"
-      "(Defaults to today’s date- you can change this later)"
+      ;; "(Defaults to today’s date- you can change this later)"
       ]
      [:div {:style {:height "1.875rem"}}  " "]
      [create-project-field-description (r/cursor project-details-atom [:description]) "Description" "Starting to work on a new app..."
       "(Can just be one line)"]
-     [:div {:style {:height "1.875rem"}}  " "]
-     [create-project-field-link (r/cursor project-details-atom [:link]) "Link" "github.com/name/thisproject"
-      "(Optional)"]
-     [:div {:style {:height "1.875rem"}}  " "]
-     [upload-image (r/cursor project-details-atom [:images])
-      "Screenshots" "Drag and drop or \"Browse\" to upload"
-      "(Optional)"]
+    ;;  [:div {:style {:height "1.875rem"}}  " "]
+    ;;  [create-project-field-link (r/cursor project-details-atom [:link]) "Link" "github.com/name/thisproject"
+    ;;   "(Optional)"]
+    ;;  [:div {:style {:height "1.875rem"}}  " "]
+    ;;  [upload-image (r/cursor project-details-atom [:images])
+    ;;   "Screenshots" "Drag and drop or \"Browse\" to upload"
+    ;;   "(Optional)"]
      
      [:div {:style {:height 28}}  " "]     
      ;; [:div.w-full

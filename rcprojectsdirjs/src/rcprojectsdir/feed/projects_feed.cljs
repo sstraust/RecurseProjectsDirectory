@@ -68,6 +68,12 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
      description]
+    ;;  [:div.font-normal
+    ;; {:style {:margin-left "3.438rem"
+    ;;          :padding-bottom "1.875rem"
+    ;;          :margin-top "1.875rem"
+    ;;          :font-size "1.563rem"}}
+    ;;  project_links[0]]
     ;; [:div.self-end.font-bold.underline
     ;;  {:style {:padding-bottom "1.875rem"
     ;;           :padding-right "1.875rem"
