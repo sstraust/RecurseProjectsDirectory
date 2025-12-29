@@ -34,6 +34,7 @@
 
 
 (defn project-card [{:keys [id name description author created_at]}]
+;; (defn project-card [{:keys [id name description author created_at project_links]}]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
                                           :margin-right "1.875rem"
                                           :margin-bottom "1.875rem"}}
@@ -68,6 +69,12 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
      description]
+    ;;  [:div.font-normal
+    ;; {:style {:margin-left "3.438rem"
+    ;;          :padding-bottom "1.875rem"
+    ;;          :margin-top "1.875rem"
+    ;;          :font-size "1.563rem"}}
+    ;;  project_links[0]]
     ;; [:div.self-end.font-bold.underline
     ;;  {:style {:padding-bottom "1.875rem"
     ;;           :padding-right "1.875rem"
