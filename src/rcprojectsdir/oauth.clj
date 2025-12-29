@@ -1,13 +1,15 @@
 (ns rcprojectsdir.oauth
-  (:require [compojure.core :refer [defroutes GET POST]]
-            [libpython-clj2.python :as py]
-            [environ.core :refer [env]]
-            [medley.core :as medley]
-            [ring.util.response :as response]
-            [clojure.java.jdbc :as jdbc]
-            [rcprojectsdir.database :as database :refer [db-spec]]
-            [easyreagentserver.core :as er-server]
-            [libpython-clj2.require :refer [require-python]]))
+  (:require
+   [clojure.data.json :as json]
+   [clojure.java.jdbc :as jdbc]
+   [compojure.core :refer [defroutes GET POST]]
+   [easyreagentserver.core :as er-server]
+   [environ.core :refer [env]]
+   [libpython-clj2.python :as py]
+   [libpython-clj2.require :refer [require-python]]
+   [medley.core :as medley]
+   [rcprojectsdir.database :as database :refer [db-spec]]
+   [ring.util.response :as response]))
 
 
 (require-python '[requests_oauthlib :refer [OAuth2Session]])
@@ -51,15 +53,11 @@
           parsed-response (medley/map-keys keyword (into {} (py-json/loads (py/py.- user-info content))))]
       (if (not (and (:name parsed-response)
                     (:id parsed-response)))
-        {:status 500
-         :headers {"Content-Type" "text/plain"}
-         :body "Failed to Fetch Project"}
+        (er-server/failure-response "Failed to Fetch Project")
         (do
           (let [db-result (create-user-if-not-exists parsed-response)]
             (if (not db-result)
-              {:status 500
-               :headers {"Content-Type" "text/plain"}
-               :body "Failed to fetch user in database"}
+              (er-server/failure-response "Failed to fetch user in database")
               (assoc
                (response/redirect "/")
                :session
@@ -67,7 +65,30 @@
                 :db_id (:id db-result)
                 :recurse_id (:id parsed-response)}))))))))
 
+
+(defn get-curr-user-info [params]
+  (er-server/json-response (select-keys (:session params) [:id :name])))
+
+(defn login-redirect [handler]
+  (fn [request]
+    (if (get-in request [:session :recurse_id])
+      (handler request)
+      (response/redirect "/redirect"))))
+
+(defn mark-new-user-form-as-completed [params]
+  (jdbc/execute!
+   db-spec
+   ["UPDATE users
+     SET is_new_user = false
+     WHERE id = ?;"
+    (:db_id (:session params))]))
+
+
 (defroutes public-routes
   (GET "/redirect" params (redirect-to-oauth))
   (GET "/handleRedirectResponse" params (handle-redirect-response params)))
+
+(defroutes oauth-private-routes
+  (GET "/currUserInfo" params (get-curr-user-info params))
+  (POST "/newProjectPageSkip" params (mark-new-user-form-as-completed params)))
 

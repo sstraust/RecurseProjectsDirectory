@@ -33,8 +33,7 @@
           (reset! all-projects* (sort-by :created_at > all-projects))))))
 
 
-(defn project-card [{:keys [id name description author created_at]}]
-;; (defn project-card [{:keys [id name description author created_at project_links]}]
+(defn project-card [{:keys [id name description author_name created_at]}]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
                                           :margin-right "1.875rem"
                                           :margin-bottom "1.875rem"}}
@@ -56,7 +55,7 @@
          :margin-right "0.625rem"}}
        "."]
       [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
-       author]]]
+       author_name]]]
     [:div.badge.bg-badge-primary.font-semibold.px-5
      {:style {:height "2.688rem"
               :background-color "#8BDD7E"
