@@ -13,6 +13,7 @@
 
 (defn get-users-projects
   "HTTP handler: return projects for current user-id"
+  {:malli/schema (er-server/param-schema {})}
   [request]
   (let [user-id  (:db_id (:session request))
         users-projects (jdbc/query db-spec
@@ -27,6 +28,7 @@ ON p.author = u.id
 
 (defn get-all-projects
   "HTTP handler: return all projects"
+  {:malli/schema (er-server/param-schema {})}
   [_request]
   (let [all-projects (jdbc/query db-spec
                                  ["
@@ -73,6 +75,7 @@ ON p.author = u.id"])]
     insert-result))
 
 
+;; TODO add malli schema for this route
 (defn create-project [{{:keys [project-description project-name project-links images]} :params :as request}]
   (let [links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
@@ -97,7 +100,9 @@ ON p.author = u.id"])]
 
 
 ;; use keyword destructuring to access params
-(defn get-project-details [{{:keys [project-id]} :params}]
+(defn get-project-details
+  {:malli/schema (er-server/param-schema {:project-id :string})}
+  [{{:keys [project-id]} :params}]
   (let [query-result (first
                       (jdbc/query
                        db-spec
@@ -109,6 +114,8 @@ ON p.author = u.id"])]
 
 
 
+;; NOTE -- this function is from an old version of the code
+;; and isn't fully complete
 (defn edit-project [{{:keys [project-id updates]} :params}]
   (let [edit-result (jdbc/execute!
                      db-spec
@@ -143,7 +150,9 @@ ON p.author = u.id"])]
 
 ;; TODO add malli validation so we can ensure that this matches the same
 ;; schema as getallprojects
-(defn search-projects [{{:keys [search-str]} :params}]
+(defn search-projects
+  {:malli/schema (er-server/param-schema {:search-str :string})}
+  [{{:keys [search-str]} :params}]
   (er-server/json-response
    {:all-projects 
    (let [search-query (str-to-search-query search-str)]
