@@ -38,16 +38,6 @@ ON p.author = u.id"])]
     (er-server/json-response {:all-projects all-projects})))
 
 
-(comment
-
-  (jdbc/query db-spec
-              ["SELECT * FROM projects"])
-
-  
-  
-
-  )
-
 ;; manage images
 (def images-dir "resources/user_images/")
 (defn save-image-to-project
@@ -111,8 +101,6 @@ ON p.author = u.id"])]
         (er-server/failure-response "Failed to create project")))))
 
 
-;; (:params aa)
-;; (json/read-str (:project-links (:params aa)))
 ;; use keyword destructuring to access params
 (defn get-project-details
   {:malli/schema (er-server/param-schema {:project-id :string})}
