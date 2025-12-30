@@ -33,6 +33,7 @@
           (reset! all-projects* (sort-by :created_at > all-projects))))))
 
 
+
 (defn project-card [{:keys [id name description author_name created_at]}]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
                                           :margin-right "1.875rem"
