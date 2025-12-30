@@ -37,12 +37,6 @@ LEFT OUTER JOIN users u
 ON p.author = u.id"])]
     (er-server/json-response {:all-projects all-projects})))
 
-(comment
-
-  (jdbc/query db-spec
-              ["SELECT * FROM projects"])
-)
-
 
 ;; manage images
 (def images-dir "resources/user_images/")
@@ -83,7 +77,6 @@ ON p.author = u.id"])]
 
 ;; TODO add malli schema for this route
 (defn create-project [{{:keys [project-description project-name project-links images is-live]} :params :as request}]
-  (def aa request)
   (let [is-live             (if (= is-live "true") true false)
         ;; TODO -- in testing this, I noticed an issue where the string value passed in the project-links request is not what I expect it to be
         links               (if (string? project-links) [project-links] project-links) ; workaorund for a bug where array args are automatically coalesced
@@ -107,7 +100,6 @@ ON p.author = u.id"])]
         (println e)
         (er-server/failure-response "Failed to create project")))))
 
-;; (:params aa)
 
 (defn pgarray->vec
   "Converts a PostgreSQL array to a Clojure vector"
