@@ -69,12 +69,14 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
      description]
-    ;; [:div.self-end.font-bold.underline
-    ;;  {:style {:padding-bottom "1.875rem"
-    ;;           :padding-right "1.875rem"
-    ;;           :font-size "1.5rem"
-    ;;           }}
-    ;;  "View →"]
+    [:div.self-end.font-bold.underline
+     {:style {:padding-bottom "1.875rem"
+              :padding-right "1.875rem"
+              :font-size "1.5rem"
+              }}
+      [:a
+       {:href (str "/viewProject?project=" id)}
+       "View →"]]
      ]
     ])
 
