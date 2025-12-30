@@ -114,7 +114,8 @@ ON p.author = u.id"])]
   (let [query-result (first
                       (jdbc/query
                        db-spec
-                       ["SELECT p.name, p.description, p.author, p.project_links, u.name AS author_name FROM projects p
+                       ["SELECT p.name, p.description, p.author, p.project_links, p.is_live,
+                            u.name AS author_name FROM projects p
                          LEFT OUTER JOIN users u
                          ON p.author = u.id
                          WHERE p.id = ? LIMIT 1"

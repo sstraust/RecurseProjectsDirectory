@@ -60,11 +60,12 @@
        [:h-box.items-center
         [:div {:style {:margin-right "0.625rem"}}
          "Live"]
-        [:input {:type "checkbox"}]]])]
+        [:input {:type "checkbox"
+                 :disabled true
+                 :class "checkbox disabled:opacity-60 disabled:cursor-default"
+                 :checked (:is_live @project-details-atom)}]]])]
 
-   [:v-box [:div "Placeholder for Badges"]]
-
-   ])
+   [:v-box [:div "Placeholder for Badges"]]])
 
 (defn view-project-page []
   (let [project-details-atom (r/atom {})]

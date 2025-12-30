@@ -3914,6 +3914,26 @@ html {
   /* 1rem = 10px (62.5% of 16px) */
 }
 
+.disabled\:cursor-default:disabled{
+  cursor: default;
+}
+
+.disabled\:opacity-100:disabled{
+  opacity: 1;
+}
+
+.disabled\:opacity-80:disabled{
+  opacity: 0.8;
+}
+
+.disabled\:opacity-50:disabled{
+  opacity: 0.5;
+}
+
+.disabled\:opacity-60:disabled{
+  opacity: 0.6;
+}
+
 .group:hover .group-hover\:opacity-100{
   opacity: 1;
 }
