@@ -32,8 +32,15 @@
         (when-let [all-projects (:all-projects parsed)]
           (reset! all-projects* (sort-by :created_at > all-projects))))))
 
+(def one-month-ms
+  (* 30 24 60 60 1000))
 
-(defn project-card [{:keys [id name description author_name created_at]}]
+(defn within-last-month? [iso-date-string]
+  (let [now (.getTime (js/Date.))
+        then (.getTime (js/Date. iso-date-string))]
+    (< (- now then) one-month-ms)))
+
+(defn project-card [{:keys [id name description author_name created_at last_update_at]}]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
                                           :margin-right "1.875rem"
                                           :margin-bottom "1.875rem"}}
@@ -56,11 +63,24 @@
        "."]
       [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
        author_name]]]
-    [:div.badge.bg-badge-primary.font-semibold.px-5
-     {:style {:height "2.688rem"
-              :background-color "#8BDD7E"
-              :font-size "1.25rem"}}
-     "Created"]]
+
+    (cond 
+      ;; if project created in last month
+      (within-last-month? created_at)
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#8BDD7E"
+                      :font-size "1.25rem"}}
+            "New"]
+
+      ;; if updated in last month
+      (within-last-month? last_update_at)
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#86CEFF"
+                      :font-size "1.25rem"}}
+            "Updated"]
+      :else nil)]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"

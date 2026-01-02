@@ -11,9 +11,6 @@
 (defn get-recent-activity [recent-activity*]
   (go
     (let [resp   (:body (<! (http/get "/getRecentActivity")))]
-      (js/console.log "CLJS:" resp)
-      (js/console.log "JS:" (clj->js resp))
-
       (if (not resp)
         (js/alert "failed to fetch recent activity feed")
         (do
@@ -62,9 +59,8 @@
             {:style {:height "2.688rem"
                       :background-color "#86CEFF"
                       :font-size "1.25rem"}}
-            "Recently Updated"]
-      :else nil)
-    ]
+            "Updated"]
+      :else nil)]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"
@@ -117,8 +113,6 @@
     (get-recent-activity recent-activity*)
     (fn []
       [:<>
-        ;; (for [item @recent-activity*]
-        ;;   [:pre (pr-str item)])
        [:h-box
         {:style {:margin-bottom "0.625rem"}}
         [choose-menu-button  "Recent Activity" ::recent-activity selected-menu*]
