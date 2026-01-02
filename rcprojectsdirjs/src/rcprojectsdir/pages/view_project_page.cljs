@@ -21,6 +21,73 @@
         (js/alert "failed to fetch project details")))))
 
 
+(defn fetch-project-images [project-id images-atom loading-atom error-atom]
+  (reset! loading-atom true)
+  (reset! error-atom nil)
+  (go
+    (let [result (<! (http/get "/getProjectImages"
+                               {:query-params {:project-id project-id}}))]
+      (if (= (:status result) 200)
+        (reset! images-atom (:images (:body result)))
+        (reset! error-atom "Failed to load images"))
+      (reset! loading-atom false))))
+
+
+(defn image-modal
+  "DaisyUI modal for fullscreen image view"
+  [selected-image-atom]
+  [:dialog.modal
+   {:class (when @selected-image-atom "modal-open")
+    :on-click #(reset! selected-image-atom nil)}
+   [:div.modal-box.max-w-5xl.max-h-full.p-2.bg-base-300
+    {:on-click #(.stopPropagation %)}
+    [:form {:method "dialog"}
+     [:button.btn.btn-sm.btn-circle.btn-ghost.absolute.right-2.top-2
+      {:on-click #(reset! selected-image-atom nil)}
+      "✕"]]
+    (when @selected-image-atom
+      [:img.w-full.h-auto.rounded-lg
+       {:src (str "/projectImage/" @selected-image-atom)
+        :alt "Full size image"}])]
+   [:form.modal-backdrop {:method "dialog"}
+    [:button {:on-click #(reset! selected-image-atom nil)} "close"]]])
+
+(defn project-images
+  "Reagent component to display all images for a project."
+  [project-id]
+  (let [images         (r/atom [])
+        loading?       (r/atom true)
+        error          (r/atom nil)
+        selected-image (r/atom nil)]
+    (fetch-project-images project-id images loading? error)
+    (fn [_]
+      [:div.w-full
+       [image-modal selected-image]
+       (cond
+         @loading?
+         [:div.flex.justify-center.items-center.p-8
+          [:span.loading.loading-spinner.loading-lg]]
+
+         @error
+         [:div.alert.alert-error
+          [:span @error]]
+
+         (empty? @images)
+         nil
+
+         :else
+         [:div.grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-4
+          (for [{:keys [id]} @images]
+            ^{:key id}
+            [:div.card.bg-base-200.shadow-md.cursor-pointer.hover:shadow-lg.transition-shadow
+             {:on-click #(reset! selected-image id)}
+             [:figure.p-2
+              [:img.rounded-lg.w-full.h-auto.max-h-64.object-contain
+               {:src (str "/projectImage/" id)
+                :alt (str "Project image " id)
+                :loading "lazy"}]]])])])))
+
+
 ;; this is copy-pasted from projects-feed
 ;; because it has slightly different spacing
 (defn author-box [author_name]
@@ -52,6 +119,7 @@
                    :font-weight 400
                    :margin-bottom "0.6875rem"}}
      (:description @project-details-atom)]
+    [project-images (get-project-id)]
     (for [link (:project_links @project-details-atom)]
       [:h-box
        [:a.link.text-link-color {:href link :target "_blank"

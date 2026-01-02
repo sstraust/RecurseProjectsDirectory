@@ -39,7 +39,7 @@ ON p.author = u.id"])]
 
 
 ;; manage images
-(def images-dir "resources/user_images/")
+(def images-dir "resources/user_images")
 (defn save-image-to-project
   [project-id {:keys [filename tempfile]}]
   (let [;; Generate unique filename to avoid collisions
@@ -55,6 +55,37 @@ ON p.author = u.id"])]
 (defn save-project-images [project-id images]
   (doseq [image images]
     (save-image-to-project project-id image)))
+
+
+(defn get-image-paths-for-project
+  "HTTP handler: return image records for a project"
+  {:malli/schema (er-server/param-schema {:project-id :string})}
+  [{{:keys [project-id]} :params}]
+  (er-server/json-response
+   {:images (jdbc/query db-spec
+                        ["SELECT id, file_path FROM project_images WHERE project_id = ?"
+                         (Integer/parseInt project-id)])}))
+
+(defn serve-project-image
+  "Serve an image file by its database ID"
+  {:malli/schema (er-server/param-schema {:image-id :string})}
+  [{{:keys [image-id]} :params}]
+  (if-let [{:keys [file_path]} 
+           (first (jdbc/query db-spec
+                              ["SELECT file_path FROM project_images WHERE id = ?"
+                               (Integer/parseInt image-id)]))]
+    (let [file (io/file file_path)]
+      (if (.exists file)
+        {:status 200
+         :headers {"Content-Type" "application/octet-stream"}
+         :body (io/input-stream file)}
+        {:status 404
+         :headers {"Content-Type" "text/plain"}
+         :body "Image file not found"}))
+    {:status 404
+     :headers {"Content-Type" "text/plain"}
+     :body "Image record not found"}))
+
 
 
 (defn vec->pg-array [conn type-name coll]
@@ -188,4 +219,6 @@ ON p.author = u.id"])]
   (GET "/getUsersProjects" params (get-users-projects params))  
   (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
-  (POST "/searchProjects" params (search-projects params)))
+  (POST "/searchProjects" params (search-projects params))
+  (GET "/getProjectImages" params (get-image-paths-for-project params))
+  (GET "/projectImage/:image-id" params (serve-project-image params)))
