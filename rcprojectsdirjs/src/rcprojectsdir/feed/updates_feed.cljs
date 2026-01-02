@@ -16,6 +16,25 @@
         (do
           (reset! updates-list* (sort-by :created_at > (:updates-list resp))))))))
 
+(defn get-recent-activity [recent-activity*]
+  (go
+    (let [resp   (:body (<! (http/get "/getRecentActivity")))]
+      (js/console.log "CLJS:" resp)
+      (js/console.log "JS:" (clj->js resp))
+
+      (if (not resp)
+        (js/alert "failed to fetch recent activity feed")
+        (do
+          (reset! recent-activity* (:recent-activity resp)))))))
+
+(def one-month-ms
+  (* 30 24 60 60 1000))
+
+(defn within-last-month? [iso-date-string]
+  (let [now (.getTime (js/Date.))
+        then (.getTime (js/Date. iso-date-string))]
+    (< (- now then) one-month-ms)))
+
 (defn display-update [update]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
                                           :margin-right "1.875rem"}}
@@ -38,18 +57,32 @@
        "."]
       [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
        (:author_name update)]]]
-    [:div.badge.bg-badge-primary.font-semibold.px-5
-     {:style {:height "2.688rem"
-              :background-color "#86CEFF"
-              :font-size "1.25rem"}}
-     "Updated"]]
+
+    (cond 
+      (and (= (:event_type update) "project") (within-last-month? (:activity_at update))) 
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#8BDD7E"
+                      :font-size "1.25rem"}}
+            "New"]
+      (and (= (:event_type update) "update") (within-last-month? (:activity_at update))) 
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#86CEFF"
+                      :font-size "1.25rem"}}
+            "Recently Updated"]
+      :else nil)
+    ]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"
              :padding-bottom "1.875rem"
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
-     (:update_text update)]
+
+      (if (= (:event_type update) "project")
+        (:project_description update)
+        (:update_text update))]
     ;; [:div.self-end.font-bold.underline
     ;;  {:style {:padding-bottom "1.875rem"
     ;;           :padding-right "1.875rem"
@@ -87,11 +120,15 @@
 
 
 (defn updates-feed []
-  (let [updates-list* (r/atom nil)
+  (let [updates-list* (r/atom [])
+        recent-activity* (r/atom [])
         selected-menu* (r/atom ::recent-activity)]
+    (get-recent-activity recent-activity*)
     (get-updates-list updates-list*)
     (fn []
       [:<>
+        ;; (for [item @recent-activity*]
+        ;;   [:pre (pr-str item)])
        [:h-box
         {:style {:margin-bottom "0.625rem"}}
         [choose-menu-button  "Recent Activity" ::recent-activity selected-menu*]
@@ -107,8 +144,8 @@
          (= @selected-menu* ::recent-activity)
          [:v-box
           {:style {:gap "2rem"}}
-          (for [update @updates-list*]
-            [display-update update])]
+          (for [event @recent-activity*]
+            [display-update event])]
          (= @selected-menu* ::all-projects)
          [projects-feed/projects-feed]
          (= @selected-menu* ::users-projects)
