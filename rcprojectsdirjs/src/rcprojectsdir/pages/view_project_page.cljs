@@ -88,6 +88,64 @@
                 :loading "lazy"}]]])])])))
 
 
+
+(defn fetch-project-updates [project-id updates-atom loading-atom error-atom]
+  (reset! loading-atom true)
+  (reset! error-atom nil)
+  (go
+    (let [result (<! (http/get "/getUpdatesForProject"
+                               {:query-params {:project-id project-id}}))]
+      (if (= (:status result) 200)
+        (reset! updates-atom (:updates (:body result)))
+        (reset! error-atom "Failed to load updates"))
+      (reset! loading-atom false))))
+
+(defn format-date [date-str]
+  (when date-str
+    (-> date-str js/Date. (.toLocaleDateString "en-GB"))))
+
+(defn update-card [{:keys [update_text created_at]}]
+  [:div.card.bg-base-200.shadow-sm {:style {:margin-bottom "1rem"}}
+   [:div.card-body.flex-row.justify-between
+    [:v-box
+     [:div {:style {:font-weight 600
+                    :font-size "0.875rem"
+                    :margin-bottom "0.5rem"}}
+      (format-date created_at)]
+     [:div update_text]]]])
+
+(defn project-updates-list [project-id]
+  (let [updates  (r/atom [])
+        loading? (r/atom true)
+        error    (r/atom nil)]
+    (fetch-project-updates project-id updates loading? error)
+    (fn [_]
+      [:div.card.bg-base-100.shadow {:style {:margin-top "2rem"
+                                             :padding "1.5rem"}}
+       [:h2 {:style {:font-weight 700
+                     :font-size "1.25rem"
+                     :margin-bottom "1rem"}}
+        "Updates"]
+       (cond
+         @loading?
+         [:div.flex.justify-center
+          [:span.loading.loading-spinner]]
+
+         @error
+         [:div.alert.alert-error
+          [:span @error]]
+
+         (empty? @updates)
+         [:div.opacity-60 "No updates yet"]
+
+         :else
+         (for [{:keys [id] :as update} @updates]
+           ^{:key id}
+           [update-card update]))])))
+
+
+
+
 ;; this is copy-pasted from projects-feed
 ;; because it has slightly different spacing
 (defn author-box [author_name]
@@ -131,7 +189,8 @@
         [:input {:type "checkbox"
                  :disabled true
                  :class "checkbox disabled:opacity-60 disabled:cursor-default"
-                 :checked (:is_live @project-details-atom)}]]])]
+                 :checked (:is_live @project-details-atom)}]]])
+    [project-updates-list (get-project-id)]]
 
    [:v-box [:div "Placeholder for Badges"]]])
 

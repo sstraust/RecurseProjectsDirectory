@@ -837,6 +837,18 @@ html{
   outline-offset: 2px;
 }
 
+.card-body{
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: var(--padding-card, 2rem);
+  gap: 0.5rem;
+}
+
+.card-body :where(p){
+  flex-grow: 1;
+}
+
 .card figure{
   display: flex;
   align-items: center;
@@ -3427,6 +3439,18 @@ details.collapse summary::-webkit-details-marker{
   border-bottom-right-radius: var(--rounded-btn, 0.5rem);
 }
 
+.card-compact .card-body{
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.card-normal .card-body{
+  padding: var(--padding-card, 2rem);
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
 .join.join-vertical > :where(*:not(:first-child)){
   margin-left: 0px;
   margin-right: 0px;
@@ -3766,6 +3790,10 @@ details.collapse summary::-webkit-details-marker{
   width: 100vw;
 }
 
+.w-8{
+  width: 2rem;
+}
+
 .\!max-w-none{
   max-width: none !important;
 }
@@ -4028,12 +4056,26 @@ details.collapse summary::-webkit-details-marker{
   color: hsl(var(--p) / var(--tw-text-opacity));
 }
 
+.text-base-content{
+  --tw-text-opacity: 1;
+  color: hsl(var(--bc) / var(--tw-text-opacity));
+}
+
+.text-error{
+  --tw-text-opacity: 1;
+  color: hsl(var(--er) / var(--tw-text-opacity));
+}
+
 .underline{
   text-decoration-line: underline;
 }
 
 .opacity-0{
   opacity: 0;
+}
+
+.opacity-60{
+  opacity: 0.6;
 }
 
 .shadow{

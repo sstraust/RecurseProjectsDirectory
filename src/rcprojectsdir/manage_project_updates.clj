@@ -39,10 +39,25 @@
      JOIN projects b
      ON u.project_id = b.id"])}))
 
+(defn get-updates-list-for-project
+  {:malli/schema (er-server/param-schema {:project-id :string})}
+  [{{:keys [project-id]} :params}]
+  (def aa project-id)
+  (er-server/json-response
+   {:updates (jdbc/query
+              db-spec
+              ["SELECT u.id, u.update_text, u.created_at, a.name AS author_name
+                FROM project_updates u
+                JOIN users a ON u.author = a.id
+                WHERE u.project_id = ?
+                ORDER BY u.created_at DESC"
+               (Integer/parseInt project-id)])}))
+
 
 (defroutes manage-project-updates-routes
   (POST "/createUpdate" params (create-update params))
-  (GET "/getUpdatesList" params (get-updates-list params)))
+  (GET "/getUpdatesList" params (get-updates-list params))
+  (GET "/getUpdatesForProject" params (get-updates-list-for-project params)))
 
 
 (mi/collect! {:ns ['rcprojectsdir.manage-project-updates]})
