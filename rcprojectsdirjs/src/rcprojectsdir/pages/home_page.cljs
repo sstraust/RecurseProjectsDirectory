@@ -135,7 +135,8 @@
     (go
       (let [result (<! (http/post "/createUpdate"
                                   {:form-params {:project-id @selected-project-id*
-                                                 :update-contents @desc*}}))]
+                                                 :update-contents @desc*
+                                                 :event-type-contents "update"}}))]
           (if (= (:status result) 200)
             (.reload js/location)
             (js/alert "failed to update"))))))

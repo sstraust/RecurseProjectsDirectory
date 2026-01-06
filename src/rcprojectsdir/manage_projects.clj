@@ -12,29 +12,49 @@
 
 
 (defn get-users-projects
-  "HTTP handler: return projects for current user-id"
+  "HTTP handler: return projects for current user-id + last_update_at"
   {:malli/schema (er-server/param-schema {})}
   [request]
   (let [user-id  (:db_id (:session request))
         users-projects (jdbc/query db-spec
                                    ["
-SELECT p.id, p.name, p.description, p.author, p.created_at, u.name AS author_name FROM projects p
-LEFT OUTER JOIN users u
-ON p.author = u.id
- WHERE author = ?
+SELECT
+  p.id,
+  p.name,
+  p.description,
+  p.author AS author_id,
+  p.created_at,
+  u.name AS author_name,
+  MAX(pu.created_at) AS last_update_at
+FROM projects p
+LEFT JOIN users u ON p.author = u.id
+LEFT JOIN project_updates pu ON pu.project_id = p.id
+WHERE p.author = ?
+GROUP BY p.id, p.name, p.description, p.author, p.created_at, u.name
+ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC
 " user-id])]
     (er-server/json-response {:users-projects users-projects})))
 
 
 (defn get-all-projects
-  "HTTP handler: return all projects"
+  "HTTP handler: return all projects + last_update_at"
   {:malli/schema (er-server/param-schema {})}
   [_request]
   (let [all-projects (jdbc/query db-spec
                                  ["
-SELECT p.id, p.name, p.description, p.author, p.created_at, u.name AS author_name FROM projects p
-LEFT OUTER JOIN users u
-ON p.author = u.id"])]
+SELECT
+  p.id,
+  p.name,
+  p.description,
+  p.author AS author_id,
+  p.created_at,
+  u.name AS author_name,
+  MAX(pu.created_at) AS last_update_at
+FROM projects p
+LEFT JOIN users u ON p.author = u.id
+LEFT JOIN project_updates pu ON pu.project_id = p.id
+GROUP BY p.id, p.name, p.description, p.author, p.created_at, u.name
+ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
     (er-server/json-response {:all-projects all-projects})))
 
 
@@ -120,7 +140,8 @@ ON p.author = u.id"])]
         (if-let [result (first (create-project! user-id project-name project-description links images is-live))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
-                         :update-contents (str "New project created: " project-description)}
+                         :update-contents (str "New project created: " project-description)
+                         :event-type-contents "project"}
                 :session (:session request)})
               (oauth/mark-new-user-form-as-completed request)
               (er-server/json-response {:ok true
@@ -145,7 +166,7 @@ ON p.author = u.id"])]
   (let [query-result (first
                       (jdbc/query
                        db-spec
-                       ["SELECT p.name, p.description, p.author, p.project_links, p.is_live,
+                       ["SELECT p.name, p.description, p.author AS author_id, p.project_links, p.is_live,
                             u.name AS author_name FROM projects p
                          LEFT OUTER JOIN users u
                          ON p.author = u.id
@@ -169,7 +190,7 @@ ON p.author = u.id"])]
                          name = COALESCE(?, name),
                          description = COALESCE(?, description)
                        WHERE id = ?
-                       RETURNING name, description, author;"
+                       RETURNING name, description, author AS author_id;"
                       (:name updates)
                       (:description updates)
                       (Integer/parseInt project-id)])]

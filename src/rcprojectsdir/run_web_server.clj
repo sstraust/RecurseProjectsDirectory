@@ -26,7 +26,6 @@
   oauth/oauth-private-routes
   manage-projects/manage-project-routes
   manage-project-updates/manage-project-updates-routes)
-  
 
 
 (def all-routes
