@@ -21,6 +21,7 @@
   (GET "/" params (get-main-page/get-main-page params))
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page/get-main-page params))
+  (GET "/viewProject" params (get-main-page/get-main-page params))
   
   oauth/oauth-private-routes
   manage-projects/manage-project-routes

@@ -5,6 +5,7 @@
    [rcprojectsdir.pages.home-page :as home-page]
    [rcprojectsdir.pages.new-project-page :as new-project-page]
    [rcprojectsdir.pages.review-project-page :as review-project-page]
+   [rcprojectsdir.pages.view-project-page :as view-project-page]
    [reagent.dom :as rdom]))
 
 
@@ -18,7 +19,8 @@
     "/" (if js/is_new_user
           (new-project-page/load-new-project-view-first-user)
           (load-main-page))
-    "/reviewProjectPage" (review-project-page/load-review-project-page)))
+    "/reviewProjectPage" (review-project-page/load-review-project-page)
+    "/viewProject" (view-project-page/load-view-project-page)))
 
   
 (load-page)
