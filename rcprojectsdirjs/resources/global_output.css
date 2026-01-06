@@ -1493,9 +1493,7 @@ html{
   --tw-bg-opacity: 1;
   background-color: hsl(var(--b1) / var(--tw-bg-opacity));
   padding: 1.5rem;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
   transition-duration: 200ms;
@@ -1841,14 +1839,6 @@ html{
     var(--togglehandleborder);
 }
 
-.alert-info{
-  border-color: hsl(var(--in) / 0.2);
-  --tw-text-opacity: 1;
-  color: hsl(var(--inc) / var(--tw-text-opacity));
-  --alert-bg: hsl(var(--in));
-  --alert-bg-mix: hsl(var(--b1));
-}
-
 .alert-error{
   border-color: hsl(var(--er) / 0.2);
   --tw-text-opacity: 1;
@@ -2130,6 +2120,44 @@ html{
   100%{
     transform: scale(1);
   }
+}
+
+.card :where(figure:first-child){
+  overflow: hidden;
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+  border-end-start-radius: unset;
+  border-end-end-radius: unset;
+}
+
+.card :where(figure:last-child){
+  overflow: hidden;
+  border-start-start-radius: unset;
+  border-start-end-radius: unset;
+  border-end-start-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
+.card:focus-visible{
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.card.bordered{
+  border-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--b2) / var(--tw-border-opacity));
+}
+
+.card.compact .card-body{
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.card.image-full :where(figure){
+  overflow: hidden;
+  border-radius: inherit;
 }
 
 .checkbox:focus-visible{
@@ -3598,14 +3626,6 @@ details.collapse summary::-webkit-details-marker{
   top: 0.5rem;
 }
 
-.z-\[1\]{
-  z-index: 1;
-}
-
-.m-10{
-  margin: 2.5rem;
-}
-
 .mx-3{
   margin-left: 0.75rem;
   margin-right: 0.75rem;
@@ -3732,10 +3752,6 @@ details.collapse summary::-webkit-details-marker{
   height: 100vh;
 }
 
-.h-48{
-  height: 12rem;
-}
-
 .h-auto{
   height: auto;
 }
@@ -3762,10 +3778,6 @@ details.collapse summary::-webkit-details-marker{
 
 .w-screen{
   width: 100vw;
-}
-
-.w-8{
-  width: 2rem;
 }
 
 .\!max-w-none{
@@ -4028,16 +4040,6 @@ details.collapse summary::-webkit-details-marker{
 .text-primary{
   --tw-text-opacity: 1;
   color: hsl(var(--p) / var(--tw-text-opacity, 1));
-}
-
-.text-base-content{
-  --tw-text-opacity: 1;
-  color: hsl(var(--bc) / var(--tw-text-opacity));
-}
-
-.text-error{
-  --tw-text-opacity: 1;
-  color: hsl(var(--er) / var(--tw-text-opacity));
 }
 
 .underline{
