@@ -107,7 +107,8 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
         (if-let [result (first (create-project! user-id project-name project-description links images))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
-                         :update-contents (str "New project created: " project-description)}
+                         :update-contents (str "New project created: " project-description)
+                         :event-type-contents "project"}
                 :session (:session request)})
               (oauth/mark-new-user-form-as-completed request)
               (er-server/json-response {:ok true

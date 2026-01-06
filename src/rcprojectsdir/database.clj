@@ -34,6 +34,7 @@
         update_text TEXT NOT NULL,
         author INTEGER NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        event_type TEXT NOT NULL,
         FOREIGN KEY (project_id) REFERENCES projects(id),
         FOREIGN KEY (author) REFERENCES users(id)
       );"]))
@@ -82,6 +83,13 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
    db-spec
    ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_links TEXT[] DEFAULT '{}';"])
 
+
+(defn migrate-v6 []
+  (jdbc/execute!
+   db-spec
+   ["ALTER TABLE project_updates
+     ADD COLUMN IF NOT EXISTS event_type TEXT NOT NULL DEFAULT 'update';"]))
+  
   
   (jdbc/execute!
    db-spec
