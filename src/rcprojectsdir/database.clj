@@ -34,7 +34,6 @@
         update_text TEXT NOT NULL,
         author INTEGER NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-        event_type TEXT NOT NULL,
         FOREIGN KEY (project_id) REFERENCES projects(id),
         FOREIGN KEY (author) REFERENCES users(id)
       );"]))

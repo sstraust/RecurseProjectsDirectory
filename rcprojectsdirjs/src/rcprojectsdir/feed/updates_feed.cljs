@@ -15,7 +15,6 @@
         (js/alert "failed to fetch updates feed")
         (do
           (reset! updates-list* (:updates-list resp)))))))
-          (reset! updates-list* (:updates-list resp))
 
 (def one-month-ms
   (* 30 24 60 60 1000))
