@@ -139,9 +139,11 @@
          [:div.opacity-60 "No updates yet"]
 
          :else
+         [:div {:style {:max-height "30vh"
+                        :overflow "scroll"}}
          (for [{:keys [id] :as update} @updates]
            ^{:key id}
-           [update-card update]))])))
+           [update-card update])])])))
 
 
 
@@ -161,6 +163,7 @@
    [:a.link.text-link-color {:style {:font-size "1.5625rem"
                                      :font-weight 600}}
     author_name]])
+
 
 (defn project-details [project-details-atom]
   [:h-box.justify-between {:style {:width "62.5rem"
@@ -190,12 +193,19 @@
                  :disabled true
                  :class "checkbox disabled:opacity-60 disabled:cursor-default"
                  :checked (:is_live @project-details-atom)}]]])
-    [project-updates-list (get-project-id)]]
+    
+    [project-updates-list (get-project-id)]
+    (when (:owned_by_me? @project-details-atom)
+      [:button.btn.self-end.mt-4
+       {:on-click #(set! (.-href js/window.location)
+                         (str "/editProject?project=" (get-project-id)))}
+        "Edit"])]
 
    [:v-box [:div "Placeholder for Badges"]]])
 
 (defn view-project-page []
   (let [project-details-atom (r/atom {})]
+    (def zz project-details-atom)
     (fetch-current-project-details project-details-atom)
     (fn []
       [:v-box.w-screen.w-screen.items-center.h-screen
@@ -205,3 +215,5 @@
 (defn load-view-project-page []
   (rdom/render [view-project-page]
                (js/document.getElementById "main-app")))
+
+

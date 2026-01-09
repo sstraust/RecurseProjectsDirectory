@@ -22,6 +22,7 @@
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page/get-main-page params))
   (GET "/viewProject" params (get-main-page/get-main-page params))
+  (GET "/editProject" params (get-main-page/get-main-page params))
   
   oauth/oauth-private-routes
   manage-projects/manage-project-routes
@@ -50,6 +51,8 @@
 
 
 ;; (run-web-server :dev)
+;; (run-web-server)
+;; (+ 3 4)
 
 
 
