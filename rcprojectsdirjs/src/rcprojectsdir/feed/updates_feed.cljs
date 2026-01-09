@@ -14,7 +14,15 @@
       (if (not resp)
         (js/alert "failed to fetch updates feed")
         (do
-          (reset! updates-list* (sort-by :created_at > (:updates-list resp))))))))
+          (reset! updates-list* (:updates-list resp)))))))
+
+(def one-month-ms
+  (* 30 24 60 60 1000))
+
+(defn within-last-month? [iso-date-string]
+  (let [now (.getTime (js/Date.))
+        then (.getTime (js/Date. iso-date-string))]
+    (< (- now then) one-month-ms)))
 
 (defn display-update [update]
   [:v-box.bg-base-100.rounded-xl {:style {:margin-left "1.875rem"
@@ -38,18 +46,31 @@
        "."]
       [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
        (:author_name update)]]]
-    [:div.badge.bg-badge-primary.font-semibold.px-5
-     {:style {:height "2.688rem"
-              :background-color "#86CEFF"
-              :font-size "1.25rem"}}
-     "Updated"]]
+
+    (cond 
+      (and (= (:event_type update) "project") (within-last-month? (:created_at update))) 
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#8BDD7E"
+                      :font-size "1.25rem"}}
+            "New"]
+      (and (= (:event_type update) "update") (within-last-month? (:created_at update))) 
+          [:div.badge.bg-badge-primary.font-semibold.px-5
+            {:style {:height "2.688rem"
+                      :background-color "#86CEFF"
+                      :font-size "1.25rem"}}
+            "Updated"]
+      :else nil)]
    [:h-box.justify-between.w-full
     [:div.font-normal
     {:style {:margin-left "3.438rem"
              :padding-bottom "1.875rem"
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
-     (:update_text update)]
+
+      (if (= (:event_type update) "project")
+        (:project_description update)
+        (:update_text update))]
     ;; [:div.self-end.font-bold.underline
     ;;  {:style {:padding-bottom "1.875rem"
     ;;           :padding-right "1.875rem"
@@ -108,6 +129,7 @@
          [:v-box
           {:style {:gap "2rem"}}
           (for [update @updates-list*]
+            ^{:key (str (:event_type update) "-" (:created_at update) "-" (:update_id update) "-" (hash (:update_text update)))}
             [display-update update])]
          (= @selected-menu* ::all-projects)
          [projects-feed/projects-feed]
