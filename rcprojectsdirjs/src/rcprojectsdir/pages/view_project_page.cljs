@@ -205,7 +205,6 @@
 
 (defn view-project-page []
   (let [project-details-atom (r/atom {})]
-    (def zz project-details-atom)
     (fetch-current-project-details project-details-atom)
     (fn []
       [:v-box.w-screen.w-screen.items-center.h-screen
@@ -215,5 +214,3 @@
 (defn load-view-project-page []
   (rdom/render [view-project-page]
                (js/document.getElementById "main-app")))
-
-

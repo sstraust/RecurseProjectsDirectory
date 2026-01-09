@@ -13,38 +13,11 @@
         (reset! user-details-atom (:body result))
         (js/alert "failed to fetch user")))))
 
-;; user-details is a React component
-;; the let statement is an initial initialization
-;; that happens when the component is first rendered
-
-;; initially user-details-atom is a BOX containing nil
-;; my-debug-var, user-details-atom is a BOX containing nil
-;;    - my-debug-var is _NOT_ updated, but it points to the user-details-atom BOX
-
-
-
-
-
-
-
 (defn user-details []
   (let [user-details-atom (r/atom nil)]
-    (def my-debug-var user-details-atom)
     (get-user-details user-details-atom)
     (fn []
       [:div (first (first (clojure.string/split (or (:name @user-details-atom) "") #" ")))])))
-
-
-;; anything that you can do in clojure code, you can also do interactively!!
-;; so if you want to know what things you can do interactively when you're debugging,
-;; it's all  the tools that you already have!
-;; what does this function look lik eif user-details-atom is the name "my name"
-;; this IS the REPL
-
-;; but all this is doing, is it is sending commands directly from where you are currently editing to the REPL
-
-
-
 
 
 (defn full-navbar []

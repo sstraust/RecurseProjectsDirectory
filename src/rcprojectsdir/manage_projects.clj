@@ -207,8 +207,6 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
       (er-server/json-response (first edit-result))
       (er-server/failure-response "Failed to Edit Project"))))
 
-;; (edit-project bb)
-
 
 
 (defn search-remove-special-chars
