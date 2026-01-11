@@ -2,6 +2,15 @@
 FROM clojure:tools-deps
 WORKDIR /app
 
+# Install Python and development libraries for libpython-clj2
+RUN apt-get update && \
+    apt-get install -y python3 python3-dev libpython3-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set Java options for native access (fixes libpython-clj2 warning)
+ENV JAVA_TOOL_OPTIONS="--enable-native-access=ALL-UNNAMED"
+
 # 1. Cache Clojure dependencies
 COPY deps.edn ./
 RUN clojure -P
