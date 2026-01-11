@@ -82,7 +82,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
    db-spec
    ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_links TEXT[] DEFAULT '{}';"])
 
-  
   (jdbc/execute!
    db-spec
    ["CREATE TABLE IF NOT EXISTS project_images (
@@ -91,13 +90,27 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
       file_path TEXT NOT NULL
     )"]))
 
+(defn migrate-v6 []
+  (jdbc/execute!
+   db-spec
+   ["ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_live BOOLEAN DEFAULT FALSE;"]))
+
+
+(defn migrate-v7 []
+  (jdbc/execute!
+   db-spec
+   ["ALTER TABLE project_updates
+     ADD COLUMN IF NOT EXISTS event_type TEXT NOT NULL DEFAULT 'update';"]))
+
 
 (defn database-migrations []
   (migrate-v1)
   (migrate-v2)
   (migrate-v3)
   (migrate-v4)
-  (migrate-v5))
+  (migrate-v5)
+  (migrate-v6)
+  (migrate-v7))
 
 
 

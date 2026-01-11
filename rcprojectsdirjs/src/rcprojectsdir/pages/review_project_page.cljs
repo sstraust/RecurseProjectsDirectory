@@ -8,6 +8,8 @@
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 
+;; THIS PAGE IS DEPRECATED -- LEAVING HERE JUST FOR REFERENCE
+
 (defn get-project-id []
   (.get (js/URLSearchParams. (.-search (.-location js/window))) "project"))
 
