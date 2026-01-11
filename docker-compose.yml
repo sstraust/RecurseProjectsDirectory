@@ -18,5 +18,21 @@ services:
       timeout: 5s
       retries: 5
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rcprojectsdir-web
+    ports:
+      - "8001:8001"
+    volumes:
+      - m2_cache:/root/.m2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PYTHON_VERSION=3
+
 volumes:
   postgres_data:
+  m2_cache:
