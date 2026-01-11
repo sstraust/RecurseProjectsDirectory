@@ -4,7 +4,41 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-### Setup
+### Docker Setup (Recommended)
+
+The easiest way to run the project is with Docker Compose, which starts the backend, frontend, and database together.
+
+**Start all services:**
+
+```bash
+docker compose up
+```
+
+Or run in the background:
+
+```bash
+docker compose up -d
+```
+
+This will start:
+- **Backend** (Clojure): http://localhost:8001
+- **Frontend** (shadow-cljs): http://localhost:9630 (UI)
+- **PostgreSQL**: localhost:5432
+- **nREPL ports**: 7000 (backend), 7002 (frontend)
+
+**Stop all services:**
+
+```bash
+docker compose down
+```
+
+**View logs:**
+
+```bash
+docker compose logs -f
+```
+
+### Manual Setup (Without Docker)
 
 Install JavaScript dependencies:
 
@@ -14,12 +48,12 @@ npm install
 cd ..
 ```
 
-### Starting the Database
+### Starting the Database (Manual)
 
 Start the PostgreSQL container:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 Check the database is running:
@@ -72,6 +106,32 @@ Then run:
 ```
 
 The server will be available at http://localhost:8001
+
+## Production Deployment
+
+Build a production Docker image:
+
+```bash
+docker build -t rcprojectsdir:latest .
+```
+
+Run the production image (requires external PostgreSQL):
+
+```bash
+docker run --rm -it \
+  -p 8001:8001 \
+  -e POSTGRES_DB=rcprojectsdir \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypass \
+  -e DATABASE_URL=postgresql://myuser:mypass@your-db-host/rcprojectsdir \
+  rcprojectsdir:latest
+```
+
+The production build:
+- Uses multistage builds to minimize image size
+- Compiles ClojureScript assets ahead of time
+- Only includes runtime dependencies
+- Does not include development tools (nREPL, live reload, etc.)
 
 ## License
 

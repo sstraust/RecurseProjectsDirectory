@@ -1,6 +1,40 @@
 version: '3.8'
 
 services:
+  backend:
+    image: clojure:temurin-21-alpine
+    container_name: rcprojectsdir-backend
+    working_dir: /app
+    ports:
+      - "8001:8001"  # HTTP server
+      - "7000:7000"  # nREPL
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+      - ~/.clojure:/root/.clojure
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-rcprojectsdir}
+      - POSTGRES_USER=${POSTGRES_USER:-myuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mypass}
+    command: clojure -M -m rcprojectsdir.run-web-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: theasp/clojurescript-nodejs:latest
+    container_name: rcprojectsdir-frontend
+    working_dir: /app
+    ports:
+      - "9630:9630"  # shadow-cljs UI
+      - "7002:7002"  # shadow-cljs nREPL
+    volumes:
+      - .:/app
+      - ./rcprojectsdirjs/node_modules:/app/rcprojectsdirjs/node_modules
+      - ~/.m2:/root/.m2
+      - ~/.clojure:/root/.clojure
+    command: sh -c "cd rcprojectsdirjs && npm install && npx shadow-cljs watch app"
+
   postgres:
     image: postgres:16-alpine
     container_name: rcprojectsdir-postgres
