@@ -8,7 +8,6 @@ RUN clojure -P
 
 # 2. Copy your backend source and resources
 COPY src ./src
-COPY resources ./resources
 COPY rcprojectsdirjs ./rcprojectsdirjs
 
 
