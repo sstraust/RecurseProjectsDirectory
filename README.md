@@ -26,6 +26,8 @@ This will start:
 - **PostgreSQL**: localhost:5432
 - **nREPL ports**: 7000 (backend), 7002 (frontend)
 
+**Note**: The backend service automatically installs Python 3 and dependencies from `requirements.txt` on startup. This is required for OAuth functionality via `libpython-clj2`.
+
 **Stop all services:**
 
 ```bash
@@ -39,6 +41,12 @@ docker compose logs -f
 ```
 
 ### Manual Setup (Without Docker)
+
+Install Python dependencies (required for OAuth via libpython-clj2):
+
+```bash
+pip3 install -r requirements.txt
+```
 
 Install JavaScript dependencies:
 
@@ -130,6 +138,7 @@ docker run --rm -it \
 The production build:
 - Uses multistage builds to minimize image size
 - Compiles ClojureScript assets ahead of time
+- Includes Python 3 and pip dependencies for OAuth functionality
 - Only includes runtime dependencies
 - Does not include development tools (nREPL, live reload, etc.)
 

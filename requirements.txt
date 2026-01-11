@@ -1,0 +1,2 @@
+# Python dependencies for libpython-clj2
+requests-oauthlib==1.3.1

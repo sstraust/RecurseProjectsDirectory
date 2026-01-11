@@ -16,7 +16,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-rcprojectsdir}
       - POSTGRES_USER=${POSTGRES_USER:-myuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mypass}
-    command: clojure -M -m rcprojectsdir.run-web-server
+    command: sh -c "apk add --no-cache python3 py3-pip && pip3 install --no-cache-dir -r requirements.txt --break-system-packages && clojure -M -m rcprojectsdir.run-web-server"
     depends_on:
       postgres:
         condition: service_healthy
