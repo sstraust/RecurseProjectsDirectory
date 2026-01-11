@@ -8,7 +8,6 @@
    [rcprojectsdir.get-main-page :as get-main-page]
    [rcprojectsdir.manage-project-updates :as manage-project-updates]
    [rcprojectsdir.manage-projects :as manage-projects]
-   [rcprojectsdir.manage-recent-activity :as manage-recent-activity]
    [rcprojectsdir.oauth :as oauth]))
 
 
@@ -22,11 +21,11 @@
   (GET "/" params (get-main-page/get-main-page params))
   ;; use frontend routing for requests
   (GET "/reviewProjectPage" params (get-main-page/get-main-page params))
+  (GET "/viewProject" params (get-main-page/get-main-page params))
   
   oauth/oauth-private-routes
   manage-projects/manage-project-routes
-  manage-project-updates/manage-project-updates-routes
-  manage-recent-activity/manage-recent-activity-routes)
+  manage-project-updates/manage-project-updates-routes)
 
 
 (def all-routes
