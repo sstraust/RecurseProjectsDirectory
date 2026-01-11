@@ -14,12 +14,46 @@ npm install
 cd ..
 ```
 
-### Starting the Database
+### Running with Docker (Production)
 
-Start the PostgreSQL container:
+The easiest way to run the application in production is using Docker Compose, which will:
+- Build the ClojureScript production bundle
+- Start the PostgreSQL database
+- Run the application server
+
+Before running, make sure you have a `.env` file with your OAuth credentials:
+
+```bash
+RECURSE_CLIENT_ID=your_client_id
+RECURSE_CLIENT_SECRET=your_client_secret
+```
+
+Then start everything:
 
 ```bash
 docker compose up -d
+```
+
+The application will be available at http://localhost:8001
+
+View logs:
+
+```bash
+docker compose logs -f app
+```
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+### Starting the Database (Development)
+
+For development, you can run just the PostgreSQL container:
+
+```bash
+docker compose up -d postgres
 ```
 
 Check the database is running:

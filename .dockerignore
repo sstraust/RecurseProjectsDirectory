@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+target
+classes
+checkouts
+*.jar
+*.class
+
+# Development files
+.lein-*
+.nrepl-port
+.prepl-port
+.clj-kondo/.cache
+.clj-kondo/imports
+.cpcache
+.lsp/.cache
+
+# Node.js
+node_modules
+package-lock.json
+
+# ClojureScript build outputs (we rebuild in Docker)
+rcprojectsdirjs/out
+rcprojectsdirjs/.shadow-cljs
+rcprojectsdirjs/.clj-kondo/.cache
+rcprojectsdirjs/.cpcache
+
+# Environment and secrets
+.env
+*.env
+
+# Database dumps
+db_dump*
+database_dump*
+
+# Python
+__pycache__
+**/__pycache__
+
+# OS files
+.DS_Store
+**/.DS_Store
+
+# User uploads
+resources/user_images
+
+# Documentation
+doc
+README.md
+CHANGELOG.md
+LICENSE
+
+# Development scripts
+*.#*
+
+# Python checkpoints
+python/hn_checkpoint.json
+*hn_all_stories.csv

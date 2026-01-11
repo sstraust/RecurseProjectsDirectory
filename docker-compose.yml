@@ -18,5 +18,26 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rcprojectsdir-app
+    environment:
+      # Database connection
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-rcprojectsdir}
+      POSTGRES_USER: ${POSTGRES_USER:-myuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypass}
+      # OAuth configuration (set these in .env file)
+      RECURSE_CLIENT_ID: ${RECURSE_CLIENT_ID}
+      RECURSE_CLIENT_SECRET: ${RECURSE_CLIENT_SECRET}
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
