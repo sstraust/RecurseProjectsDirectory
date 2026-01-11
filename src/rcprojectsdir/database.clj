@@ -6,7 +6,8 @@
 (def db-spec
   (if-let [db-url (System/getenv "DATABASE_URL")]
     ;; Production: use DATABASE_URL
-    {:jdbcUrl db-url}
+    {:connection-uri (str "jdbc:" db-url)}
+    ;; {:jdbcUrl db-url}
     ;; Local: use individual components
     {:dbtype   "postgresql"
      :dbname   (env :postgres-db "rcprojectsdir")
