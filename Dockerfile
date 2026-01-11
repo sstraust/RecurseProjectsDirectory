@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install required Python modules
-RUN pip3 install --no-cache-dir requests-oauthlib
+RUN pip3 install --no-cache-dir --break-system-packages requests-oauthlib
 
 # Set Java options for native access (fixes libpython-clj2 warning)
 ENV JAVA_TOOL_OPTIONS="--enable-native-access=ALL-UNNAMED"
