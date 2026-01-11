@@ -16,7 +16,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir requests-oauthlib
+RUN pip3 install --no-cache-dir --break-system-packages requests-oauthlib
 
 # 3. Copy compiled JS from Stage 1 into your web server's resource path
 # IMPORTANT: I am placing them in 'resources/public/js'. 
