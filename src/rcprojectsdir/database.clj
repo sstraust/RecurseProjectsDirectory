@@ -3,18 +3,26 @@
             [clojure.java.jdbc :as jdbc]))
 
 
+(defn parse-database-url [url]
+  (let [uri (java.net.URI. url)
+        [user password] (clojure.string/split (.getUserInfo uri) #":" 2)]
+    {:dbtype   "postgresql"
+     :host     (.getHost uri)
+     :port     (if (pos? (.getPort uri)) (.getPort uri) 5432)
+     :dbname   (subs (.getPath uri) 1)  ;; remove leading "/"
+     :user     user
+     :password password}))
+
 (def db-spec
   (if-let [db-url (System/getenv "DATABASE_URL")]
-    ;; Production: use DATABASE_URL
-    {:connection-uri (str "jdbc:" db-url)}
-    ;; {:jdbcUrl db-url}
-    ;; Local: use individual components
+    (parse-database-url db-url)
     {:dbtype   "postgresql"
      :dbname   (env :postgres-db "rcprojectsdir")
      :host     (env :postgres-host "localhost")
      :port     (env :postgres-port 5432)
      :user     (env :postgres-user "myuser")
      :password (env :postgres-password "mypass")}))
+
 ;; (def db-spec
 ;;   {:dbtype "postgresql"
 ;;    :dbname (env :postgres-db "rcprojectsdir")
