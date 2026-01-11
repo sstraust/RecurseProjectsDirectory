@@ -2,13 +2,25 @@
   (:require [environ.core :refer [env]]
             [clojure.java.jdbc :as jdbc]))
 
+
 (def db-spec
-  {:dbtype "postgresql"
-   :dbname (env :postgres-db "rcprojectsdir")
-   :host (env :postgres-host "localhost")
-   :port (env :postgres-port 5432)
-   :user (env :postgres-user "myuser")
-   :password (env :postgres-password "mypass")})
+  (if-let [db-url (System/getenv "DATABASE_URL")]
+    ;; Production: use DATABASE_URL
+    {:jdbcUrl db-url}
+    ;; Local: use individual components
+    {:dbtype   "postgresql"
+     :dbname   (env :postgres-db "rcprojectsdir")
+     :host     (env :postgres-host "localhost")
+     :port     (env :postgres-port 5432)
+     :user     (env :postgres-user "myuser")
+     :password (env :postgres-password "mypass")}))
+;; (def db-spec
+;;   {:dbtype "postgresql"
+;;    :dbname (env :postgres-db "rcprojectsdir")
+;;    :host (env :postgres-host "localhost")
+;;    :port (env :postgres-port 5432)
+;;    :user (env :postgres-user "myuser")
+;;    :password (env :postgres-password "mypass")})
 
 
 (defn migrate-v1 []
