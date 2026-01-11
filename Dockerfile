@@ -10,6 +10,11 @@ RUN clojure -P
 COPY src ./src
 COPY rcprojectsdirjs ./rcprojectsdirjs
 
+# Install Python and development libraries for libpython-clj2
+RUN apt-get update && \
+    apt-get install -y python3 python3-dev libpython3-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 3. Copy compiled JS from Stage 1 into your web server's resource path
 # IMPORTANT: I am placing them in 'resources/public/js'. 
