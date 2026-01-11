@@ -58,9 +58,8 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
     (er-server/json-response {:all-projects all-projects})))
 
 
-
 ;; manage images
-(def images-dir "resources/user_images/")
+(def images-dir "resources/user_images")
 (defn save-image-to-project
   [project-id {:keys [filename tempfile]}]
   (let [;; Generate unique filename to avoid collisions
@@ -78,46 +77,87 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
     (save-image-to-project project-id image)))
 
 
+(defn get-image-paths-for-project
+  "HTTP handler: return image records for a project"
+  {:malli/schema (er-server/param-schema {:project-id :string})}
+  [{{:keys [project-id]} :params}]
+  (er-server/json-response
+   {:images (jdbc/query db-spec
+                        ["SELECT id, file_path FROM project_images WHERE project_id = ?"
+                         (Integer/parseInt project-id)])}))
+
+(defn serve-project-image
+  "Serve an image file by its database ID"
+  {:malli/schema (er-server/param-schema {:image-id :string})}
+  [{{:keys [image-id]} :params}]
+  (if-let [{:keys [file_path]} 
+           (first (jdbc/query db-spec
+                              ["SELECT file_path FROM project_images WHERE id = ?"
+                               (Integer/parseInt image-id)]))]
+    (let [file (io/file file_path)]
+      (if (.exists file)
+        {:status 200
+         :headers {"Content-Type" "application/octet-stream"}
+         :body (io/input-stream file)}
+        {:status 404
+         :headers {"Content-Type" "text/plain"}
+         :body "Image file not found"}))
+    {:status 404
+     :headers {"Content-Type" "text/plain"}
+     :body "Image record not found"}))
+
+
+
 (defn vec->pg-array [conn type-name coll]
   (.createArrayOf (jdbc/get-connection conn) type-name (into-array coll)))
 
 (defn create-project!
   "Create a new project row for the given user id."
-  [user-id project-name description links images]
+  [user-id project-name description links images is-live]
   (let [insert-result (jdbc/insert!
                        db-spec
                        :projects
                        {:name project-name
                         :description description
                         :project_links (vec->pg-array db-spec "TEXT" links)
-                        :author user-id})]
+                        :author user-id
+                        :is_live (or is-live false)})]
     (save-project-images (:id (first insert-result)) images)
     insert-result))
 
 
 ;; TODO add malli schema for this route
-(defn create-project [{{:keys [project-description project-name project-links images]} :params :as request}]
-  (let [links               (rest project-links) ; workaorund for a bug where array args are automatically coalesced
+(defn create-project [{{:keys [project-description project-name project-links images is-live]} :params :as request}]
+  (let [is-live             (if (= is-live "true") true false)
+        ;; TODO -- in testing this, I noticed an issue where the string value passed in the project-links request is not what I expect it to be
+        links               (if (string? project-links) [project-links] project-links) ; workaorund for a bug where array args are automatically coalesced
         user-id             (:db_id (:session request))
         images              (if (map? images) [images] images)] ; workaorund for a bug where array args are automatically coalesced
     (try
       (if (and (string? project-description)
                (string? project-name)
                (not (clojure.string/blank? project-name)))
-        (if-let [result (first (create-project! user-id project-name project-description links images))]
+        (if-let [result (first (create-project! user-id project-name project-description links images is-live))]
           (do (manage-project-updates/create-update
                {:params {:project-id (str (:id result))
-                         :update-contents (str "New project created: " project-description)}
+                         :update-contents (str "New project created: " project-description)
+                         :event-type-contents "project"}
                 :session (:session request)})
               (oauth/mark-new-user-form-as-completed request)
               (er-server/json-response {:ok true
                                         :project-id (:id result)}))
           (er-server/failure-response "failed to create project"))
-        (er-server/failure-response "invalid project name"))
+        (er-server/failure-response "invalid project name or description"))
       (catch Exception e
         (println e)
         (er-server/failure-response "Failed to create project")))))
 
+
+(defn pgarray->vec
+  "Converts a PostgreSQL array to a Clojure vector"
+  [pg-array]
+  (when pg-array
+    (vec (.getArray pg-array))))
 
 ;; use keyword destructuring to access params
 (defn get-project-details
@@ -126,11 +166,17 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
   (let [query-result (first
                       (jdbc/query
                        db-spec
-                       ["SELECT name, description, author AS author_id FROM projects WHERE id = ? LIMIT 1"
+                       ["SELECT p.name, p.description, p.author AS author_id, p.project_links, p.is_live,
+                            u.name AS author_name FROM projects p
+                         LEFT OUTER JOIN users u
+                         ON p.author = u.id
+                         WHERE p.id = ? LIMIT 1"
                         (Integer/parseInt project-id)]))]
     (if query-result
-      (er-server/json-response query-result)
+      (er-server/json-response
+       (update query-result :project_links pgarray->vec))
       (er-server/failure-response "Failed to Fetch Project"))))
+
 
 
 
@@ -194,4 +240,6 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
   (GET "/getUsersProjects" params (get-users-projects params))  
   (GET "/getAllProjects" params (get-all-projects params))
   (POST "/newProject" params (create-project params))
-  (POST "/searchProjects" params (search-projects params)))
+  (POST "/searchProjects" params (search-projects params))
+  (GET "/getProjectImages" params (get-image-paths-for-project params))
+  (GET "/projectImage/:image-id" params (serve-project-image params)))

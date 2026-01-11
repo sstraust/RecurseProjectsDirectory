@@ -14,7 +14,15 @@
       (if (not resp)
         (js/alert "failed to fetch recent activity feed")
         (do
-          (reset! recent-activity* (:recent-activity resp)))))))
+          (reset! updates-list* (:updates-list resp)))))))
+
+(def one-month-ms
+  (* 30 24 60 60 1000))
+
+(defn within-last-month? [iso-date-string]
+  (let [now (.getTime (js/Date.))
+        then (.getTime (js/Date. iso-date-string))]
+    (< (- now then) one-month-ms)))
 
 (def one-month-ms
   (* 30 24 60 60 1000))
@@ -45,16 +53,16 @@
          :margin-right "0.625rem"}}
        "."]
       [:a.link.text-link-color {:style {:font-size "1.5625rem"}}
-       (:author_name event)]]]
+       (:author_name update)]]]
 
     (cond 
-      (and (= (:event_type event) "project") (within-last-month? (:activity_at event))) 
+      (and (= (:event_type update) "project") (within-last-month? (:created_at update))) 
           [:div.badge.bg-badge-primary.font-semibold.px-5
             {:style {:height "2.688rem"
                       :background-color "#8BDD7E"
                       :font-size "1.25rem"}}
             "New"]
-      (and (= (:event_type event) "update") (within-last-month? (:activity_at event))) 
+      (and (= (:event_type update) "update") (within-last-month? (:created_at update))) 
           [:div.badge.bg-badge-primary.font-semibold.px-5
             {:style {:height "2.688rem"
                       :background-color "#86CEFF"
@@ -68,9 +76,9 @@
              :margin-top "1.875rem"
              :font-size "1.563rem"}}
 
-      (if (= (:event_type event) "project")
-        (:project_description event)
-        (:update_text event))]
+      (if (= (:event_type update) "project")
+        (:project_description update)
+        (:update_text update))]
     ;; [:div.self-end.font-bold.underline
     ;;  {:style {:padding-bottom "1.875rem"
     ;;           :padding-right "1.875rem"
@@ -128,9 +136,9 @@
          (= @selected-menu* ::recent-activity)
          [:v-box
           {:style {:gap "2rem"}}
-          (for [event @recent-activity*]
-            ^{:key (str (:event_type event) "-" (:activity_at event) "-" (:project_id event) "-" (hash (:update_text event)))}
-            [display-event event])]
+          (for [update @updates-list*]
+            ^{:key (str (:event_type update) "-" (:created_at update) "-" (:update_id update) "-" (hash (:update_text update)))}
+            [display-update update])]
          (= @selected-menu* ::all-projects)
          [projects-feed/projects-feed]
          (= @selected-menu* ::users-projects)
