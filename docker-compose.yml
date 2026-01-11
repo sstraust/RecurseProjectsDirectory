@@ -17,6 +17,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  web:
+    image: clojure:temurin-21-tools-deps-alpine
+    container_name: rcprojectsdir-web
+    working_dir: /app
+    volumes:
+      - .:/app
+      - m2_cache:/root/.m2
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: clj -X rcprojectsdir.run-web-server/run-web-server :arg1 :prod
 
 volumes:
+  m2_cache:
   postgres_data:

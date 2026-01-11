@@ -40,7 +40,9 @@
   (when input-mode (reset! er-server/MODE input-mode))
   (when (= input-mode :dev)
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
+  (println "before database migrations")
   (database/database-migrations)
+  (println "after database migrations")
   (er-server/run-web-server
    "rcprojectsdirjs" all-routes
    {:port 8001
