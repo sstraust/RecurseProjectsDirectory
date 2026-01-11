@@ -4,9 +4,12 @@ WORKDIR /app
 
 # Install Python and development libraries for libpython-clj2
 RUN apt-get update && \
-    apt-get install -y python3 python3-dev libpython3-dev && \
+    apt-get install -y python3 python3-dev libpython3-dev python3-pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Install required Python modules
+RUN pip3 install --no-cache-dir requests-oauthlib
 
 # Set Java options for native access (fixes libpython-clj2 warning)
 ENV JAVA_TOOL_OPTIONS="--enable-native-access=ALL-UNNAMED"
