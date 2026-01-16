@@ -17,14 +17,20 @@
 (require-python '[json :as py-json])
 
 
+
 (def recurse-auth-url "https://www.recurse.com/oauth/authorize")
 (def recurse-token-url "https://www.recurse.com/oauth/token")
 (def recurse-handle-auth-redirect-url "http://localhost:8001/handleRedirectResponse")
+(def disco-handle-auth-redirect-url "http://projectsdirectory.rcdis.co/handleRedirectResponse")
 
 
+(defn get-redirect-url []
+  (if (System/getenv "IS_DISCO_DEPLOY")
+    disco-handle-auth-redirect-url
+    recurse-handle-auth-redirect-url))
 
 (defn redirect-to-oauth []
-  (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+  (let [oauth-obj (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri (get-redirect-url))]
     (response/redirect (first (py/py. oauth-obj authorization_url
                                 recurse-auth-url)))))
 
@@ -44,7 +50,8 @@
 (defn handle-redirect-response [params]
   (let [response-url (str (if (= :dev @er-server/MODE) "http://" "https://")
                           (get-in params [:headers "host"]) "/" (get params :uri) "?" (get params :query-string))
-        authorizer (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri recurse-handle-auth-redirect-url)]
+        authorizer (requests_oauthlib/OAuth2Session (:recurse-client-id env)  :redirect_uri
+                                                    (get-redirect-url))]
     (py/py. authorizer fetch_token
             recurse-token-url
             :client_secret (:recurse-client-secret env)
