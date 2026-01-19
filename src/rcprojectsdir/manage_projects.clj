@@ -162,7 +162,7 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
 ;; use keyword destructuring to access params
 (defn get-project-details
   {:malli/schema (er-server/param-schema {:project-id :string})}
-  [{{:keys [project-id]} :params}]
+  [{{:keys [project-id]} :params :as request}]
   (let [query-result (first
                       (jdbc/query
                        db-spec
@@ -174,7 +174,10 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
                         (Integer/parseInt project-id)]))]
     (if query-result
       (er-server/json-response
-       (update query-result :project_links pgarray->vec))
+       (-> query-result
+           (update :project_links pgarray->vec)
+           (assoc :owned_by_me? (= (:author_id query-result)
+                                   (:db_id (:session request))))))
       (er-server/failure-response "Failed to Fetch Project"))))
 
 
@@ -182,17 +185,23 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
 
 ;; NOTE -- this function is from an old version of the code
 ;; and isn't fully complete
-(defn edit-project [{{:keys [project-id updates]} :params}]
+(defn edit-project [{{:keys [project-id updates]} :params :as params}]
   (let [edit-result (jdbc/execute!
                      db-spec
                      ["UPDATE projects
                        SET
                          name = COALESCE(?, name),
-                         description = COALESCE(?, description)
+                         description = COALESCE(?, description),
+                         is_live = COALESCE(?, is_live),
+                         project_links = COALESCE(?, project_links)
+
                        WHERE id = ?
                        RETURNING name, description, author AS author_id;"
                       (:name updates)
                       (:description updates)
+                      (:is_live updates)
+                      (vec->pg-array db-spec "TEXT" (or (remove clojure.string/blank? (:project_links updates))
+                                                        []))
                       (Integer/parseInt project-id)])]
     (if edit-result
       (er-server/json-response (first edit-result))

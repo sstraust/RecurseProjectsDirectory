@@ -139,9 +139,11 @@
          [:div.opacity-60 "No updates yet"]
 
          :else
+         [:div {:style {:max-height "30vh"
+                        :overflow "scroll"}}
          (for [{:keys [id] :as update} @updates]
            ^{:key id}
-           [update-card update]))])))
+           [update-card update])])])))
 
 
 
@@ -162,10 +164,11 @@
                                      :font-weight 600}}
     author_name]])
 
+
 (defn project-details [project-details-atom]
   [:h-box.justify-between {:style {:width "62.5rem"
                                    :margin-top "3.75rem"}}
-   [:v-box
+   [:v-box.flex-grow.pb-16
     [:h1 {:style {:font-weight 700
                   :font-size "1.875rem"
                   :line-height "100%"
@@ -190,12 +193,21 @@
                  :disabled true
                  :class "checkbox disabled:opacity-60 disabled:cursor-default"
                  :checked (:is_live @project-details-atom)}]]])
-    [project-updates-list (get-project-id)]]
+    
+    [project-updates-list (get-project-id)]
+    ]
 
-   [:v-box [:div "Placeholder for Badges"]]])
+   [:v-box.h-full.justify-between
+    [:div "Placeholder for Badges"]
+    (when (:owned_by_me? @project-details-atom)
+      [:button.btn.self-end.mt-4
+       {:on-click #(set! (.-href js/window.location)
+                         (str "/editProject?project=" (get-project-id)))}
+        "Edit"])]])
 
 (defn view-project-page []
   (let [project-details-atom (r/atom {})]
+    (def zz project-details-atom)
     (fetch-current-project-details project-details-atom)
     (fn []
       [:v-box.w-screen.w-screen.items-center.h-screen
