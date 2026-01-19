@@ -176,7 +176,7 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
       (er-server/json-response
        (-> query-result
            (update :project_links pgarray->vec)
-           (assoc :owned_by_me? (= (:author query-result)
+           (assoc :owned_by_me? (= (:author_id query-result)
                                    (:db_id (:session request))))))
       (er-server/failure-response "Failed to Fetch Project"))))
 
