@@ -25,8 +25,10 @@
    {:style {:background-color "#D9D9D9"
             :min-height "6.125rem"}}
     [:div.flex-1
-     [:div.font-bold {:style {:margin-left "2.5rem"
-                              :font-size "1.25rem"}}
+     [:a.font-bold.cursor-pointer
+      {:style {:margin-left "2.5rem"
+               :font-size "1.25rem"}
+       :href "/"}
       "RC Projects Directory"]]
    [:h-box.h-full.items-center
     {:style
