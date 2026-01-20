@@ -39,7 +39,7 @@
           ;;  body   (:body resp)]
         (when-let [users-projects (:users-projects parsed)]
           (reset! users-projects* users-projects)
-          (reset! selected-project-id* (:id (first users-projects))))))
+          (reset! selected-project-id* (or (:id (first users-projects)) -1)))))
 )
 
 
@@ -189,9 +189,10 @@
     (get-users-projects users-projects* selected-project-id*)
     (fn []
       [:v-box.items-start.w-full
-      (when (not (= @selected-project-id* -1))
+       (if (= @selected-project-id* -1)
+         [:div "'+ New Project' to tell rc about your project!"]
         ;; [create-project-view desc* selected-project-id* users-projects*]
-        [existing-projects-view desc* selected-project-id* users-projects*])])))
+         [existing-projects-view desc* selected-project-id* users-projects*])])))
 
 
 
