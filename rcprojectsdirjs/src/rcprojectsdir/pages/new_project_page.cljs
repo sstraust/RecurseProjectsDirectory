@@ -280,7 +280,7 @@
                 :max-width "none"
                 :font-size "1.5rem"
                 :height "4.25rem"}}
-       "Skip"]
+       "Cancel"]
       [:button.btn.btn-primary.normal-case.rounded-xl
        {:on-click (create-project-fn project-details-atom)
         :style {:width "8.625rem"
