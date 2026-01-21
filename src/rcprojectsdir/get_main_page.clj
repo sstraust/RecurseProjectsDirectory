@@ -32,7 +32,7 @@
     (str "<script>is_new_user=" (is-new-user params) "</script>")
     (if (= @er-server/MODE :dev)
       (include-js  (str "/out/main.js?v=" (rand-int 100000)))
-      (include-js "/prod_js/main.js"))]))
+      (include-js "/out/main.js?v=2"))]))
 
 (defn get-main-page [params]
   {:status 200

@@ -3620,6 +3620,10 @@ details.collapse summary::-webkit-details-marker{
   top: 0.5rem;
 }
 
+.end-1{
+  inset-inline-end: 0.25rem;
+}
+
 .z-\[1\]{
   z-index: 1;
 }
