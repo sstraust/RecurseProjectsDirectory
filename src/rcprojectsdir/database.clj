@@ -133,7 +133,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY project_search;
   (migrate-v6)
   (migrate-v7))
 
-;; (database-migrations)
+
 
 
 
