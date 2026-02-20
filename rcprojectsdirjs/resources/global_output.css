@@ -3600,10 +3600,6 @@ details.collapse summary::-webkit-details-marker{
   inset: 0px;
 }
 
-.end-1{
-  inset-inline-end: 0.25rem;
-}
-
 .right-1{
   right: 0.25rem;
 }
@@ -3618,10 +3614,6 @@ details.collapse summary::-webkit-details-marker{
 
 .top-2{
   top: 0.5rem;
-}
-
-.end-1{
-  inset-inline-end: 0.25rem;
 }
 
 .z-\[1\]{

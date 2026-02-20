@@ -73,6 +73,18 @@ Then run:
 
 The server will be available at http://localhost:8001
 
+# Automatic Backups
+
+Backups of the postgres database are written to this private git repository:
+
+https://github.com/sstraust/projectsDirectoryBackups.git
+
+
+
+
+
+
+
 ## License
 
 Copyright © 2023 FIXME
