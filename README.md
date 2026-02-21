@@ -35,16 +35,17 @@ docker compose down
 ```
 
 ### Setting up Auth with RC
+
 Follow the instructions at https://www.recurse.com/settings/apps to register your app for recurse.
 
-To develop locally, create an oauth application, and set the redirect URI to "http://localhost:8001/handleRedirectResponse"  You can name it anything you want.
+To develop locally, create an oauth application, and set the redirect URI to "http://localhost:8001/handleRedirectResponse" You can name it anything you want.
 
 Then copy the generated id and secret to your .env file
 
+```
 RECURSE_CLIENT_ID= _the client id_
 RECURSE_CLIENT_SECRET=_the client secret_
-
-
+```
 
 ### Starting the Application
 
@@ -72,6 +73,12 @@ Then run:
 ```
 
 The server will be available at http://localhost:8001
+
+How Eliza runs it:
+Backend:
+source ~/RCProjectsDirEnv/.venv/bin/activate && clj -X rcprojectsdir.run-web-server/run-web-server :arg1 nil
+Frontend:
+npx shadow-cljs watch app
 
 ## License
 
