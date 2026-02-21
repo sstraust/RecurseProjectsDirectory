@@ -38,7 +38,7 @@
   
 
 (defn run-web-server [input-mode]
-  (reset! er-server/MODE :dev)
+  ;; (reset! er-server/MODE :dev)
   ;; (when input-mode (reset! er-server/MODE input-mode))
   (println @er-server/MODE)
   (when (= @er-server/MODE :dev)
