@@ -8,6 +8,7 @@
    [rcprojectsdir.get-main-page :as get-main-page]
    [rcprojectsdir.manage-project-updates :as manage-project-updates]
    [rcprojectsdir.manage-projects :as manage-projects]
+   [rcprojectsdir.manage-recent-activity :as manage-recent-activity]
    [rcprojectsdir.oauth :as oauth]))
 
 
