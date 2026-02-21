@@ -21,7 +21,21 @@
           (set! (.-href js/window.location)
                            (str "/viewProject?project=" (view-project-page/get-project-id)))
           (js/alert "failed to save!"))))))
-  
+
+(defn delete-project [project-details-atom]
+  (go
+    (.log js/console "the things: ")
+    (.log js/console @project-details-atom)
+    (.log js/console (view-project-page/get-project-id))
+    (when @project-details-atom
+      (let [result (<! (http/delete 
+                                  (str "/deleteProject/"
+                                  (view-project-page/get-project-id))))]
+        (.log js/console result)
+        (if (= (:status result) 200)
+          (set! (.-href js/window.location)
+                           (str "/"))
+          (js/alert "failed to delete!"))))))
 
 
 (defn edit-project-page []
@@ -44,14 +58,20 @@
         "(Optional)"]
 
        [:div "Currently you cannot edit project screenshots. this feature is coming soon"]
-       [:h-box.w-full.justify-end.mt-6
-        [:button.btn.btn-outline.mt-4.mx-4
-         {:on-click #(set! (.-href js/window.location)
-                           (str "/viewProject?project=" (view-project-page/get-project-id)))}
-         "Cancel"]
-        [:button.btn.btn-primary.mt-4
-         {:on-click #(save-updated-project project-details-atom)}
-         "Save"]]]])))
+
+       [:h-box.w-full.justify-between.mt-6
+        [:button.btn.btn-error.mt-4
+          ;; call the delete function and also set the url back to the dashboard
+          {:on-click #(delete-project project-details-atom)}
+          "Delete"]
+        [:h-box.w-full.justify-end
+          [:button.btn.btn-outline.mt-4.mx-4
+          {:on-click #(set! (.-href js/window.location)
+                            (str "/viewProject?project=" (view-project-page/get-project-id)))}
+          "Cancel"]
+          [:button.btn.btn-primary.mt-4
+          {:on-click #(save-updated-project project-details-atom)}
+          "Save"]]]]])))
 
 
 (defn load-edit-project-page []

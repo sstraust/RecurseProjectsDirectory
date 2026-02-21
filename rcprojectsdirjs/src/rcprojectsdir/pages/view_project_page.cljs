@@ -199,6 +199,7 @@
 
    [:v-box.h-full.justify-between
     [:div "Placeholder for Badges"]
+    (.log js/console (:owned_by_me? @project-details-atom))
     (when (:owned_by_me? @project-details-atom)
       [:button.btn.self-end.mt-4
        {:on-click #(set! (.-href js/window.location)
