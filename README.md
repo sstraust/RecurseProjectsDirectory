@@ -42,8 +42,10 @@ To develop locally, create an oauth application, and set the redirect URI to "ht
 
 Then copy the generated id and secret to your .env file
 
-RECURSE*CLIENT_ID= \_the client id*
-RECURSE*CLIENT_SECRET=\_the client secret*
+```
+RECURSE_CLIENT_ID= _the client id_
+RECURSE_CLIENT_SECRET=_the client secret_
+```
 
 ### Starting the Application
 
