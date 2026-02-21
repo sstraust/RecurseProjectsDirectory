@@ -38,9 +38,10 @@
   
 
 (defn run-web-server [input-mode]
-  (when input-mode (reset! er-server/MODE input-mode))
+  (reset! er-server/MODE :dev)
+  ;; (when input-mode (reset! er-server/MODE input-mode))
   (println @er-server/MODE)
-  (when (= input-mode :dev)
+  (when (= @er-server/MODE :dev)
     (py/py. os/environ __setitem__ "OAUTHLIB_INSECURE_TRANSPORT" "1"))
   (println "before database migrations")
   (database/database-migrations)

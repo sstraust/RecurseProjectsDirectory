@@ -4,7 +4,7 @@
    [clojure.java.io :as io]
    [clojure.java.jdbc :as jdbc]
    [clojure.string :as str]
-   [compojure.core :refer [defroutes GET POST]]
+   [compojure.core :refer [defroutes GET POST DELETE]]
    [easyreagentserver.core :as er-server]
    [rcprojectsdir.database :as database :refer [db-spec]]
    [rcprojectsdir.manage-project-updates :as manage-project-updates]
@@ -152,6 +152,32 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
         (println e)
         (er-server/failure-response "Failed to create project")))))
 
+(defn delete-project!
+  "Deletes a project by id. Returns a success/failure HTTP response."
+  [{{:keys [project-id]} :params}]
+  (try
+    (let [id (some-> project-id str parse-long)]
+      (cond
+        (nil? id)
+        (er-server/failure-response "Missing or invalid project-id")
+
+        :else
+        (let [result (jdbc/execute! db-spec ["DELETE FROM projects WHERE id = ?" id])
+              update-count (or (:update-count (first result))
+                               (first result)
+                               0)]
+          (cond
+            (= 1 update-count)
+            (er-server/success-response)
+
+            (= 0 update-count)
+            (er-server/failure-response "Project not found")
+
+            :else
+            (er-server/failure-response "Unexpected delete result")))))
+    (catch Exception e
+      (println e)
+      (er-server/failure-response (str "Failed to Delete Project" (.getMessage e))))))
 
 (defn pgarray->vec
   "Converts a PostgreSQL array to a Clojure vector"
@@ -199,9 +225,6 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
                        RETURNING name, description, author AS author_id;"
                       (:name updates)
                       (:description updates)
-                      (:is_live updates)
-                      (vec->pg-array db-spec "TEXT" (or (remove clojure.string/blank? (:project_links updates))
-                                                        []))
                       (Integer/parseInt project-id)])]
     (if edit-result
       (er-server/json-response (first edit-result))
@@ -251,4 +274,5 @@ ORDER BY COALESCE(MAX(pu.created_at), p.created_at) DESC"])]
   (POST "/newProject" params (create-project params))
   (POST "/searchProjects" params (search-projects params))
   (GET "/getProjectImages" params (get-image-paths-for-project params))
-  (GET "/projectImage/:image-id" params (serve-project-image params)))
+  (GET "/projectImage/:image-id" params (serve-project-image params))
+  (DELETE "/deleteProject/:project-id" params (delete-project! params)))
